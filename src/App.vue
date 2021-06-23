@@ -4,7 +4,6 @@
       :entity="m.entity"
       :headers="m.headers"
       :items="m.items"
-      :loading="m.bLoading"
       :sort-by.sync="m.sortBy"
       :sort-desc.sync="m.sortDesc"
       :page.sync="m.page"
@@ -50,31 +49,11 @@ import { map, tap } from "rxjs/operators";
 const entitySub = new Subject<string>();
 
 export default defineComponent({
-  // props: {
-  //   entity: {
-  //     type: String as () => entity.entity_name_t,
-  //     required: true
-  //   },
-  //   dbopt: {
-  //     type: Object as () => FindManyOptions,
-  //     required: false
-  //   },
-  //   items: {
-  //     type: Array as () => any[],
-  //     required: false
-  //   },
-  //   title: {
-  //     type: Boolean,
-  //     default: false
-  //   }
-  // },
   setup() {
     const m = reactive({
       headers: undefined as DataTableHeader[] | undefined,
       items: [] as any[],
       entity: undefined as entity.entity_name_t | undefined,
-      dbopt: Object as () => FindManyOptions,
-      bLoading: true,
       page: 1,
       pageCount: 0,
       itemsLength: 0,
@@ -92,23 +71,28 @@ export default defineComponent({
     const buildHeaders = () => {
       m.headers = helper.ListDescriptions[m.entity!].headers();
     };
-
-    const updateList = () => {
-      if (m.items) {
-        m.items = m.items;
-        m.bLoading = false;
-        return;
-      }
-      m.bLoading = true;
-      // prettier-ignore
-      (helper.GetList[m.entity!](m.dbopt as any) as Observable<any[]>)
-      .pipe(tap((x) => {
-        m.bLoading = false;
-        m.items = x;
-      })).subscribe
+    type orderdesc_t = "ASC" | "DESC" | 1 | -1 | undefined;
+    type opt_t = {
+      entityName: entity.entity_name_t;
+      order?: {};
+      orderby: string;
+      orderdesc: orderdesc_t;
+      skip: number;
+      take?: number;
     };
 
-    async function getAlldata() {
+    const updateList = () => {
+      const opt: opt_t = {
+        entityName: m.entity!,
+        orderby: m.sortBy,
+        orderdesc: m.sortDesc ? "DESC" : "ASC",
+        skip: (m.page - 1) * 10
+      };
+      m.jsondata = helper.getList(opt);
+      m.items = m.jsondata!.data;
+    };
+
+    function getAlldata() {
       buildHeaders();
       updateList();
     }
@@ -135,6 +119,7 @@ export default defineComponent({
         updateList();
       }
     );
+
     // init
     updateEntity("User");
     buildHeaders();

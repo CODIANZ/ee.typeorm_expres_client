@@ -20,3 +20,16 @@ export function isEntity(s: unknown): s is entity_name_t {
 }
 
 export const entities = [User, Book];
+
+// export type user_params_t = {
+//   id: "id;";
+//   age: "age";
+//   firstName: "firstName";
+//   lastName: "lastName";
+// };
+// export type book_params_t = {
+//   id: "id";
+//   title: "title";
+//   author: "author";
+//   publish_at: "publish_at";
+// };

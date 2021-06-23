@@ -21,7 +21,7 @@ export class Server implements Api {
     opt: listopt_t<T>
   ): Observable<entity.entity_map_t[T][]> {
     // prettier-ignore
-    return from(axios.post(crud_url+"list"))
+    return from(axios.post(crud_url))
     .pipe(map((x: any) => {
       return x.data as entity.entity_map_t[T][];
     }));
