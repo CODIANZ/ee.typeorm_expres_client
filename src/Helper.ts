@@ -3,38 +3,10 @@ import { FindManyOptions } from "typeorm";
 import * as entity from "./entity";
 import axios from "axios";
 
-const crud_url = "http://localhost:3000/";
-
 export type ListDescription<T extends entity.entity_name_t> = {
   basicOptions: () => FindManyOptions<entity.entity_map_t[T]>;
   headers: () => DataTableHeader<entity.entity_map_t[T]>[];
 };
-
-export const ListDescriptions: {
-  [E in entity.entity_name_t]: ListDescription<E>;
-} = {
-  User: {
-    basicOptions: () => ({
-      order: { age: "DESC" }
-    }),
-    headers: () => [
-      { text: "id", sortable: true, value: "id" },
-      { text: "firstName", sortable: true, value: "firstName" },
-      { text: "lastName", sortable: true, value: "lastName" },
-      { text: "age", sortable: true, value: "age" }
-    ]
-  },
-  Book: {
-    basicOptions: () => ({}),
-    headers: () => [
-      { text: "id", sortable: true, value: "id" },
-      { text: "title", sortable: true, value: "title" },
-      { text: "author", sortable: true, value: "author" },
-      { text: "publish_at", sortable: true, value: "publish_at" }
-    ]
-  }
-};
-
 type orderdesc_t = "ASC" | "DESC" | 1 | -1 | undefined;
 type opt_t = {
   entityName: entity.entity_name_t;
@@ -60,10 +32,35 @@ type req_book_t = req_base_t & {
 
 type req_t = req_user_t | req_book_t;
 
+const crud_url = "http://localhost:3000/";
+
+export const ListDescriptions: {
+  [E in entity.entity_name_t]: ListDescription<E>;
+} = {
+  User: {
+    basicOptions: () => ({}),
+    headers: () => [
+      { text: "id", sortable: true, value: "id" },
+      { text: "firstName", sortable: true, value: "firstName" },
+      { text: "lastName", sortable: true, value: "lastName" },
+      { text: "age", sortable: true, value: "age" }
+    ]
+  },
+  Book: {
+    basicOptions: () => ({}),
+    headers: () => [
+      { text: "id", sortable: true, value: "id" },
+      { text: "title", sortable: true, value: "title" },
+      { text: "author", sortable: true, value: "author" },
+      { text: "publish_at", sortable: true, value: "publish_at" }
+    ]
+  }
+};
+
 export async function getList(opt: opt_t) {
   let res;
   opt.order = createOrder(opt.entityName, opt.orderby, opt.orderdesc);
-  const query = createListOptions(opt);
+  const query = createQuery(opt);
   await axios({
     method: "post",
     url: crud_url,
@@ -107,7 +104,7 @@ function createOrder(
   }
 }
 
-function createListOptions(opt: opt_t): FindManyOptions {
+function createQuery(opt: opt_t): FindManyOptions {
   return { order: opt.order, skip: opt.skip, take: opt.take ? opt.take : 10 };
 }
 

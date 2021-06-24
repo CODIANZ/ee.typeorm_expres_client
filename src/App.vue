@@ -7,7 +7,6 @@
       :sort-by.sync="m.sortBy"
       :sort-desc.sync="m.sortDesc"
       :server-items-length="m.itemsLength"
-      :items-per-page="10"
       :page.sync="m.page"
       class="elevation-1"
     />
@@ -22,7 +21,15 @@
       </template>
     </v-container>
     <hr />
-    <span>{{ m.response }}</span>
+    <div v-if="m.response">
+      <span>
+        {{ m.response.config.data }}
+      </span>
+      <hr />
+      <span>
+        {{ m.response.data }}
+      </span>
+    </div>
   </div>
 </template>
 
@@ -61,6 +68,9 @@ export default defineComponent({
       if (entity.isEntity(e)) {
         m.entity = e;
         m.page = 1;
+        m.sortBy = "";
+        m.sortDesc = true;
+        m.prevSortBy = "";
         buildHeaders();
       }
     };
@@ -79,7 +89,6 @@ export default defineComponent({
       m.items = m.response!.data.body;
       m.itemsLength = m.response!.data.length;
       m.pageCount = Math.ceil(m.itemsLength / 10);
-      console.log(m.items);
     }
 
     watch(
