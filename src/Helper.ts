@@ -1,11 +1,7 @@
 import { DataTableHeader } from "vuetify";
 import { FindManyOptions } from "typeorm";
 import * as entity from "./entity";
-import { Observable, of } from "rxjs";
-import { Application } from "./Application";
-import { map, tap } from "rxjs/operators";
-import axios from "axios";
-import { AxiosResponse } from "axios";
+import axios, { AxiosResponse } from "axios";
 
 const crud_url = "http://localhost:3000/";
 
@@ -48,23 +44,42 @@ type opt_t = {
   skip: number;
   take?: number;
 };
+type req_base_t = {
+  entity: keyof entity.entity_map_t;
+};
 
-export const getList = (opt: opt_t): AxiosResponse => {
-  let res: any;
+type req_user_t = req_base_t & {
+  entity: "User";
+  query: FindManyOptions<entity.entity_map_t["User"]>;
+};
+
+type req_book_t = req_base_t & {
+  entity: "Book";
+  query: FindManyOptions<entity.entity_map_t["Book"]>;
+};
+
+type req_t = req_user_t | req_book_t;
+
+export async function getList(opt: opt_t) {
+  let res;
   opt.order = createOrder(opt.entityName, opt.orderby, opt.orderdesc);
   const query = createListOptions(opt);
-  res = axios
-    .post(crud_url, createReq(opt.entityName, query))
+  await axios({
+    method: "post",
+    url: crud_url,
+    headers: { "Content-Type": "application/json" },
+    data: createReq(opt.entityName, query)
+  })
     .then((response) => {
       res = response;
     })
     .catch((e) => {
-      res = e;
+      res = e.response.data.message;
     });
   return res;
-};
+}
 
-const createReq = (entityName: entity.entity_name_t, query: {}) => {
+const createReq = (entityName: entity.entity_name_t, query: {}): req_t => {
   return { entity: entityName, query: query };
 };
 
@@ -95,42 +110,6 @@ function createOrder(
 function createListOptions(opt: opt_t): FindManyOptions {
   return { order: opt.order, skip: opt.skip, take: opt.take ? opt.take : 10 };
 }
-
-// function createOptions<B, E>(b: B, e?: E, skip?: number, take?: number) {
-//   return { skip, take, ...b, ...e };
-// }
-// export const GetList: {
-//   [E in entity.entity_name_t]: (
-//     opt?: FindManyOptions<entity.entity_map_t[E]>,
-//     skip?: number,
-//     take?: number
-//   ) => Observable<entity.entity_map_t[E][]>;
-// } = {
-//   User: (opt?: FindManyOptions<entity.User>, skip?: number, take?: number) => {
-//     return Application.Instance.Api.list("User", {
-//       opt: {
-//         ...createOptions(
-//           ListDescriptions["User"].basicOptions(),
-//           opt,
-//           skip,
-//           take
-//         )
-//       }
-//     });
-//   },
-//   Book: (opt?: FindManyOptions<entity.Book>, skip?: number, take?: number) => {
-//     return Application.Instance.Api.list("Book", {
-//       opt: {
-//         ...createOptions(
-//           ListDescriptions["Book"].basicOptions(),
-//           opt,
-//           skip,
-//           take
-//         )
-//       }
-//     });
-//   }
-// };
 
 export const GetListTitle: {
   [M in entity.entity_name_t]: () => string;

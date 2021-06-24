@@ -23,31 +23,28 @@
           </v-radio-group>
         </v-container>
       </template>
-      <v-row no-gutters class="my-3">
-        <v-btn type="button" @click="getAlldata"> getAlldata </v-btn>
-      </v-row>
     </v-container>
     <hr />
-    <span>{{ m.jsonData }}</span>
+    <span>{{ m.response }}</span>
   </div>
 </template>
 
 <script lang="ts">
-import {
-  defineComponent,
-  onMounted,
-  reactive,
-  watch
-} from "@vue/composition-api";
-import axios, { AxiosResponse } from "axios";
+import { defineComponent, reactive, watch } from "@vue/composition-api";
+import { AxiosResponse } from "axios";
 import * as helper from "./Helper";
 import * as entity from "./entity";
-import { FindManyOptions } from "typeorm";
 import { DataTableHeader } from "vuetify";
-import { Observable, Subject } from "rxjs";
-import { map, tap } from "rxjs/operators";
-const entitySub = new Subject<string>();
 
+type orderdesc_t = "ASC" | "DESC" | 1 | -1 | undefined;
+type opt_t = {
+  entityName: entity.entity_name_t;
+  order?: {};
+  orderby: string;
+  orderdesc: orderdesc_t;
+  skip: number;
+  take?: number;
+};
 export default defineComponent({
   setup() {
     const m = reactive({
@@ -57,52 +54,42 @@ export default defineComponent({
       page: 1,
       pageCount: 0,
       itemsLength: 0,
-      jsondata: null as AxiosResponse | null,
-      sortBy: "age",
-      oldSortBy: "age",
+      response: undefined as AxiosResponse | undefined,
+      sortBy: "",
+      prevSortBy: "",
       sortDesc: true
     });
 
     const updateEntity = (e: unknown) => {
       if (entity.isEntity(e)) {
         m.entity = e;
+        buildHeaders();
       }
     };
     const buildHeaders = () => {
       m.headers = helper.ListDescriptions[m.entity!].headers();
     };
-    type orderdesc_t = "ASC" | "DESC" | 1 | -1 | undefined;
-    type opt_t = {
-      entityName: entity.entity_name_t;
-      order?: {};
-      orderby: string;
-      orderdesc: orderdesc_t;
-      skip: number;
-      take?: number;
-    };
 
-    const updateList = () => {
+    async function updateList() {
       const opt: opt_t = {
         entityName: m.entity!,
         orderby: m.sortBy,
         orderdesc: m.sortDesc ? "DESC" : "ASC",
         skip: (m.page - 1) * 10
       };
-      m.jsondata = helper.getList(opt);
-      m.items = m.jsondata!.data;
-    };
-
-    function getAlldata() {
-      buildHeaders();
-      updateList();
+      m.response = await helper.getList(opt);
+      m.items = m.response!.data.body;
+      m.itemsLength = m.response!.data.length;
+      m.pageCount = m.itemsLength / 10;
+      console.log(m.items);
     }
 
     watch(
       () => [m.sortBy, m.sortDesc],
       () => {
-        if (m.sortBy === undefined) m.sortBy = m.oldSortBy;
+        if (m.sortBy === undefined) m.sortBy = m.prevSortBy;
         if (m.sortDesc === undefined) m.sortDesc = true;
-        m.oldSortBy = m.sortBy;
+        m.prevSortBy = m.sortBy;
         m.page = 1;
         updateList();
       }
@@ -115,22 +102,15 @@ export default defineComponent({
       () => m.entity,
       () => {
         updateEntity(m.entity);
-        buildHeaders();
         updateList();
       }
     );
 
     // init
     updateEntity("User");
-    buildHeaders();
     updateList();
-    entitySub.asObservable().pipe(
-      map((e) => {
-        updateEntity(e);
-      })
-    ).subscribe;
 
-    return { m, getAlldata, updateEntity };
+    return { m, updateEntity };
   }
 });
 </script>
