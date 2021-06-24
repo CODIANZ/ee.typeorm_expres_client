@@ -6,14 +6,11 @@
       :items="m.items"
       :sort-by.sync="m.sortBy"
       :sort-desc.sync="m.sortDesc"
+      :server-items-length="m.itemsLength"
+      :items-per-page="10"
       :page.sync="m.page"
       class="elevation-1"
-      hide-default-footer
-      @page-count="pageCount = $event"
     />
-    <div class="text-center pt-2">
-      <v-pagination v-model="m.page" :length="m.pageCount" :total-visible="7" />
-    </div>
     <v-container>
       <template>
         <v-container fluid>
@@ -63,6 +60,7 @@ export default defineComponent({
     const updateEntity = (e: unknown) => {
       if (entity.isEntity(e)) {
         m.entity = e;
+        m.page = 1;
         buildHeaders();
       }
     };
@@ -80,7 +78,7 @@ export default defineComponent({
       m.response = await helper.getList(opt);
       m.items = m.response!.data.body;
       m.itemsLength = m.response!.data.length;
-      m.pageCount = m.itemsLength / 10;
+      m.pageCount = Math.ceil(m.itemsLength / 10);
       console.log(m.items);
     }
 

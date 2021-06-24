@@ -1,7 +1,7 @@
 import { DataTableHeader } from "vuetify";
 import { FindManyOptions } from "typeorm";
 import * as entity from "./entity";
-import axios, { AxiosResponse } from "axios";
+import axios from "axios";
 
 const crud_url = "http://localhost:3000/";
 
