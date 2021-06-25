@@ -108,13 +108,10 @@ export default defineComponent({
       }
     );
     watch(
-      () => m.page,
+      () => [m.page, m.itemsPerPage],
       () => updateList()
     );
-    watch(
-      () => m.itemsPerPage,
-      () => updateList()
-    );
+
     watch(
       () => m.entity,
       () => {
