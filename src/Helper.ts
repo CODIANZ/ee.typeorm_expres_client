@@ -50,9 +50,9 @@ function createOrder(
   // prettier-ignore
   const headerTexts = (entity.ListDescriptions[entityName].headers()as any).map((x:DataTableHeader) => x.text);
   headerTexts.forEach((value: string) => {
-    if (order) return;
+    if (Object.keys(order).length > 0) return;
     if (value === orderby) {
-      order = { orderby: orderdesc };
+      order = { [orderby]: orderdesc };
     }
   });
   return order;
