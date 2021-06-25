@@ -1,36 +1,40 @@
 <template>
-  <div>
-    <v-data-table
-      :entity="m.entity"
-      :headers="m.headers"
-      :items="m.items"
-      :sort-by.sync="m.sortBy"
-      :sort-desc.sync="m.sortDesc"
-      :server-items-length="m.itemsLength"
-      :page.sync="m.page"
-      class="elevation-1"
-    />
-    <v-container>
-      <template>
-        <v-container fluid>
-          <v-radio-group v-model="m.entity" mandatory>
-            <v-radio label="User" value="User"></v-radio>
-            <v-radio label="Book" value="Book"></v-radio>
-          </v-radio-group>
-        </v-container>
-      </template>
-    </v-container>
-    <hr />
-    <div v-if="m.response">
-      <span>
-        {{ m.response.config.data }}
-      </span>
+  <v-app>
+    <div>
+      <v-data-table
+        :entity="m.entity"
+        :headers="m.headers"
+        :items="m.items"
+        :sort-by.sync="m.sortBy"
+        :sort-desc.sync="m.sortDesc"
+        :server-items-length="m.itemsLength"
+        :page.sync="m.page"
+        :items-per-page.sync="m.itemsPerPage"
+        class="elevation-1"
+      >
+      </v-data-table>
+      <v-container>
+        <template>
+          <v-container fluid>
+            <v-radio-group v-model="m.entity" mandatory>
+              <v-radio label="User" value="User"></v-radio>
+              <v-radio label="Book" value="Book"></v-radio>
+            </v-radio-group>
+          </v-container>
+        </template>
+      </v-container>
       <hr />
-      <span>
-        {{ m.response.data }}
-      </span>
+      <div v-if="m.response">
+        <span>
+          {{ m.response.config.data }}
+        </span>
+        <hr />
+        <span>
+          {{ m.response.data }}
+        </span>
+      </div>
     </div>
-  </div>
+  </v-app>
 </template>
 
 <script lang="ts">
@@ -47,7 +51,7 @@ type Options = {
   orderby: string;
   orderdesc: OrderDesc;
   skip: number;
-  take?: number;
+  take: number;
 };
 export default defineComponent({
   setup() {
@@ -58,6 +62,7 @@ export default defineComponent({
       page: 1,
       pageCount: 0,
       itemsLength: 0,
+      itemsPerPage: 10,
       response: undefined as AxiosResponse | undefined,
       sortBy: "",
       prevSortBy: "",
@@ -83,7 +88,8 @@ export default defineComponent({
         entityName: m.entity!,
         orderby: m.sortBy,
         orderdesc: m.sortDesc ? "DESC" : "ASC",
-        skip: (m.page - 1) * 10
+        skip: (m.page - 1) * 10,
+        take: m.itemsPerPage !== -1 ? m.itemsPerPage : m.itemsLength
       };
       m.response = await helper.getList(opt);
       m.items = m.response!.data.body;
@@ -103,6 +109,10 @@ export default defineComponent({
     );
     watch(
       () => m.page,
+      () => updateList()
+    );
+    watch(
+      () => m.itemsPerPage,
       () => updateList()
     );
     watch(

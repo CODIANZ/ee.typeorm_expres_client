@@ -1,6 +1,7 @@
 import { FindManyOptions } from "typeorm";
 import * as entity from "./entity";
 import axios from "axios";
+import { DataTableHeader } from "vuetify";
 
 type OrderDesc = "ASC" | "DESC" | 1 | -1 | undefined;
 type Options = {
@@ -9,7 +10,7 @@ type Options = {
   orderby: string;
   orderdesc: OrderDesc;
   skip: number;
-  take?: number;
+  take: number;
 };
 
 const crud_url = "http://localhost:3000/";
@@ -47,8 +48,8 @@ function createOrder(
 ) {
   let order = {};
   // prettier-ignore
-  const headerTexts = entity.ListDescriptions[entityName].headers().map((x) => x.text);
-  headerTexts.forEach((value) => {
+  const headerTexts = (entity.ListDescriptions[entityName].headers()as any).map((x:DataTableHeader) => x.text);
+  headerTexts.forEach((value: string) => {
     if (order) return;
     if (value === orderby) {
       order = { orderby: orderdesc };
@@ -58,5 +59,5 @@ function createOrder(
 }
 
 function createQuery(opt: Options): FindManyOptions {
-  return { order: opt.order, skip: opt.skip, take: opt.take ? opt.take : 10 };
+  return { order: opt.order, skip: opt.skip, take: opt.take };
 }
