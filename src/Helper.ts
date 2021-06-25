@@ -1,79 +1,63 @@
-import { DataTableHeader } from "vuetify";
 import { FindManyOptions } from "typeorm";
 import * as entity from "./entity";
-import { Observable, of } from "rxjs";
-import { Application } from "./Application";
+import axios from "axios";
+import { DataTableHeader } from "vuetify";
 
-export type ListDescription<T extends entity.entity_name_t> = {
-  basicOptions: () => FindManyOptions<entity.entity_map_t[T]>;
-  headers: () => DataTableHeader<entity.entity_map_t[T]>[];
+type OrderDesc = "ASC" | "DESC" | 1 | -1 | undefined;
+type Options = {
+  entityName: entity.EntityName;
+  order?: {};
+  orderby: string;
+  orderdesc: OrderDesc;
+  skip: number;
+  take: number;
 };
 
-export const ListDescriptions: {
-  [E in entity.entity_name_t]: ListDescription<E>;
-} = {
-  User: {
-    basicOptions: () => ({
-      order: { age: "DESC" }
-    }),
-    headers: () => [
-      { text: "id", sortable: true, value: "id" },
-      { text: "firstName", sortable: true, value: "firstName" },
-      { text: "lastName", sortable: true, value: "lastName" },
-      { text: "age", sortable: true, value: "age" }
-    ]
-  },
-  Book: {
-    basicOptions: () => ({}),
-    headers: () => [
-      { text: "id", sortable: true, value: "id" },
-      { text: "title", sortable: true, value: "title" },
-      { text: "author", sortable: true, value: "author" },
-      { text: "publish_at", sortable: true, value: "publish_at" }
-    ]
-  }
-};
+const crud_url = "http://localhost:3000/";
 
-function createOptions<B, E>(b: B, e?: E, skip?: number, take?: number) {
-  return { skip, take, ...b, ...e };
+export async function getList(opt: Options) {
+  let res;
+  opt.order = createOrder(opt.entityName, opt.orderby, opt.orderdesc);
+  const query = createQuery(opt);
+  await axios({
+    method: "post",
+    url: crud_url,
+    headers: { "Content-Type": "application/json" },
+    data: createReq(opt.entityName, query)
+  })
+    .then((response) => {
+      res = response;
+    })
+    .catch((e) => {
+      res = e.response.data.message;
+    });
+  return res;
 }
 
-export const GetList: {
-  [E in entity.entity_name_t]: (
-    opt?: FindManyOptions<entity.entity_map_t[E]>,
-    skip?: number,
-    take?: number
-  ) => Observable<entity.entity_map_t[E][]>;
-} = {
-  User: (opt?: FindManyOptions<entity.User>, skip?: number, take?: number) => {
-    return Application.Instance.Api.list("User", {
-      opt: {
-        ...createOptions(
-          ListDescriptions["User"].basicOptions(),
-          opt,
-          skip,
-          take
-        )
-      }
-    });
-  },
-  Book: (opt?: FindManyOptions<entity.Book>, skip?: number, take?: number) => {
-    return Application.Instance.Api.list("Book", {
-      opt: {
-        ...createOptions(
-          ListDescriptions["Book"].basicOptions(),
-          opt,
-          skip,
-          take
-        )
-      }
-    });
-  }
+const createReq = (
+  entityName: entity.EntityName,
+  query: {}
+): entity.Request => {
+  return { entity: entityName, query: query };
 };
 
-export const GetListTitle: {
-  [M in entity.entity_name_t]: () => string;
-} = {
-  User: () => "ユーザー",
-  Book: () => "本"
-};
+function createOrder(
+  entityName: entity.EntityName,
+  orderby: string,
+  orderdesc: OrderDesc
+) {
+  let order = {};
+  // prettier-ignore
+  const headerTexts = (entity.ListDescriptions[entityName].headers()as any).map((x:DataTableHeader) => x.text);
+  headerTexts.forEach((value: string) => {
+    if (Object.keys(order).length > 0) return;
+    if (value === orderby) {
+      order = { [orderby]: orderdesc };
+    }
+  });
+  return order;
+}
+
+function createQuery(opt: Options): FindManyOptions {
+  return { order: opt.order, skip: opt.skip, take: opt.take };
+}
