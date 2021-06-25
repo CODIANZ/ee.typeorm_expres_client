@@ -40,12 +40,12 @@ import * as helper from "./Helper";
 import * as entity from "./entity";
 import { DataTableHeader } from "vuetify";
 
-type orderdesc_t = "ASC" | "DESC" | 1 | -1 | undefined;
-type opt_t = {
-  entityName: entity.entity_name_t;
+type OrderDesc = "ASC" | "DESC" | 1 | -1 | undefined;
+type Options = {
+  entityName: entity.EntityName;
   order?: {};
   orderby: string;
-  orderdesc: orderdesc_t;
+  orderdesc: OrderDesc;
   skip: number;
   take?: number;
 };
@@ -54,7 +54,7 @@ export default defineComponent({
     const m = reactive({
       headers: undefined as DataTableHeader[] | undefined,
       items: [] as any[],
-      entity: undefined as entity.entity_name_t | undefined,
+      entity: undefined as entity.EntityName | undefined,
       page: 1,
       pageCount: 0,
       itemsLength: 0,
@@ -75,11 +75,11 @@ export default defineComponent({
       }
     };
     const buildHeaders = () => {
-      m.headers = helper.ListDescriptions[m.entity!].headers();
+      m.headers = entity.ListDescriptions[m.entity!].headers();
     };
 
     async function updateList() {
-      const opt: opt_t = {
+      const opt: Options = {
         entityName: m.entity!,
         orderby: m.sortBy,
         orderdesc: m.sortDesc ? "DESC" : "ASC",
