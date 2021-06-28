@@ -26,10 +26,17 @@
       <hr />
       <div v-if="m.response">
         <span>
+          レスポンス全文：
+          {{ m.response }}
+        </span>
+        <hr />
+        <span>
+          リクエストクエリー：
           {{ m.response.config.data }}
         </span>
         <hr />
         <span>
+          レスポンスデータ：
           {{ m.response.data }}
         </span>
       </div>
