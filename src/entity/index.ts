@@ -13,7 +13,7 @@ export type EntityMap = {
 export type EntityName = keyof EntityMap;
 
 export const entities = [User, Book];
-export const entityNames: { [E in EntityName]: E } = {
+export const EntityNames: { [E in EntityName]: E } = {
   User: "User",
   Book: "Book"
 };
@@ -24,7 +24,7 @@ export const GetListTitle: {
   Book: () => "本"
 };
 export function isEntity(s: unknown): s is EntityName {
-  return typeof s === "string" && s in entityNames;
+  return typeof s === "string" && s in EntityNames;
 }
 
 export type ListDescription<T extends EntityName> = {
