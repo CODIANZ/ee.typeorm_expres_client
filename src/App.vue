@@ -76,9 +76,9 @@ export default defineComponent({
       sortDesc: true
     });
 
-    const updateEntity = (e: unknown) => {
-      if (entity.isEntity(e)) {
-        m.entity = e;
+    const updateEntity = (entityName: entity.EntityName) => {
+      if (entity.isEntity(entityName)) {
+        m.entity = entityName;
         m.page = 1;
         m.sortBy = "";
         m.sortDesc = true;
@@ -86,6 +86,7 @@ export default defineComponent({
         buildHeaders();
       }
     };
+
     const buildHeaders = () => {
       m.headers = entity.ListDescriptions[m.entity!].headers();
     };
@@ -118,11 +119,10 @@ export default defineComponent({
       () => [m.page, m.itemsPerPage],
       () => updateList()
     );
-
     watch(
       () => m.entity,
       () => {
-        updateEntity(m.entity);
+        updateEntity(m.entity!);
         updateList();
       }
     );
