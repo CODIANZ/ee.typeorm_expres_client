@@ -13,7 +13,7 @@ type Options = {
   take: number;
 };
 
-const crud_url = "http://localhost:3000/";
+const crud_url = "http://localhost:7071/api/GetList";
 
 export async function getList(opt: Options) {
   let res;
@@ -48,7 +48,7 @@ function createOrder(
 ) {
   let order = {};
   // prettier-ignore
-  const headerTexts = (entity.ListDescriptions[entityName].headers()as any).map((x:DataTableHeader) => x.text);
+  const headerTexts = (entity.ListDescriptions[entityName].headers()as any).map((x:DataTableHeader) => x.value);
   headerTexts.forEach((value: string) => {
     if (Object.keys(order).length > 0) return;
     if (value === orderby) {
