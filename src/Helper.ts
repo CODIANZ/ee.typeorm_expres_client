@@ -19,12 +19,8 @@ export async function getList(opt: Options) {
   let res;
   opt.order = createOrder(opt.entityName, opt.orderby, opt.orderdesc);
   const query = createQuery(opt);
-  await axios({
-    method: "post",
-    url: crud_url,
-    headers: { "Content-Type": "application/json" },
-    data: createReq(opt.entityName, query)
-  })
+  await axios
+    .get(crud_url, { params: createReq(opt.entityName, query) })
     .then((response) => {
       res = response;
     })
