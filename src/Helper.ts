@@ -1,4 +1,4 @@
-import { FindManyOptions } from "typeorm";
+import { FindConditions, FindManyOptions } from "typeorm";
 import * as entity from "./entity";
 import axios from "axios";
 import { DataTableHeader } from "vuetify";
@@ -9,6 +9,9 @@ type Options = {
   order?: {};
   orderby: string;
   orderdesc: OrderDesc;
+  where?: FindConditions<entity.EntityMap>;
+  searchColumn: entity.EntityName;
+  searchText: string;
   skip: number;
   take: number;
 };
@@ -17,6 +20,7 @@ const crud_url = "http://localhost:7071/api/GetList";
 
 export async function getList(opt: Options) {
   let res;
+  opt.where = createSearch(opt.entityName, opt.searchColumn, opt.searchText);
   opt.order = createOrder(opt.entityName, opt.orderby, opt.orderdesc);
   const query = createQuery(opt);
   await axios
@@ -37,6 +41,32 @@ const createReq = (
   return { entity: entityName, query: query };
 };
 
+function createQuery(opt: Options): FindManyOptions {
+  return {
+    where: opt.where,
+    order: opt.order,
+    skip: opt.skip,
+    take: opt.take
+  };
+}
+
+function createSearch(
+  entityName: entity.EntityName,
+  searchColumn: string,
+  searchText: string
+) {
+  let where = {};
+  const headerValues = (
+    entity.ListDescriptions[entityName].headers() as any
+  ).map((x: DataTableHeader) => x.value);
+  headerValues.forEach((value: string) => {
+    if (Object.keys(where).length > 0) return;
+    if (value === searchColumn) {
+      where = { [searchColumn]: `${searchText}` };
+    }
+  });
+  return where;
+}
 function createOrder(
   entityName: entity.EntityName,
   orderby: string,
@@ -44,16 +74,12 @@ function createOrder(
 ) {
   let order = {};
   // prettier-ignore
-  const headerTexts = (entity.ListDescriptions[entityName].headers()as any).map((x:DataTableHeader) => x.value);
-  headerTexts.forEach((value: string) => {
+  const headerValues = (entity.ListDescriptions[entityName].headers()as any).map((x:DataTableHeader) => x.value);
+  headerValues.forEach((value: string) => {
     if (Object.keys(order).length > 0) return;
     if (value === orderby) {
       order = { [orderby]: orderdesc };
     }
   });
   return order;
-}
-
-function createQuery(opt: Options): FindManyOptions {
-  return { order: opt.order, skip: opt.skip, take: opt.take };
 }
