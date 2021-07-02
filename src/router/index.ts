@@ -9,9 +9,16 @@ const routes: Array<RouteConfig> = [
     redirect: "/user"
   },
   {
-    name: "list",
-    path: "/:model",
-    component: () => import("../views/List.vue")
+    name: "user",
+    path: "/user",
+    component: () => import("../views/User.vue"),
+    props: true
+  },
+  {
+    name: "book",
+    path: "/book",
+    component: () => import("../views/Book.vue"),
+    props: true
   }
 ];
 

@@ -1,5 +1,5 @@
 <template>
-  <List :entity="Book" />
+  <List :entity="`Book`" />
 </template>
 
 <script lang="ts">
@@ -8,7 +8,7 @@ import { defineComponent } from "@vue/composition-api";
 export default defineComponent({
   setup() {},
   components: {
-    List: () => import("./List.vue")
+    List: () => import("../components/List.vue")
   }
 });
 </script>

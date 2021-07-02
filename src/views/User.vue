@@ -1,14 +1,19 @@
 <template>
-  <List :entity="user" />
+  <List :entity="m.entity" />
 </template>
 
 <script lang="ts">
-import { defineComponent } from "@vue/composition-api";
+import { defineComponent, reactive } from "@vue/composition-api";
 
 export default defineComponent({
-  setup() {},
+  setup() {
+    const m = reactive({
+      entity: "User"
+    });
+    return { m };
+  },
   components: {
-    List: () => import("./List.vue")
+    List: () => import("../components/List.vue")
   }
 });
 </script>

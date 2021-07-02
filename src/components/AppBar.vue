@@ -1,7 +1,7 @@
 <template>
   <div>
     <v-app-bar app elevate-on-scroll>
-      <v-app-bar-nav-icon @click="m.drawer = true"></v-app-bar-nav-icon>
+      <v-app-bar-nav-icon @click="m.drawer = !m.drawer"></v-app-bar-nav-icon>
       <v-toolbar-title> {{ m.title }} </v-toolbar-title>
     </v-app-bar>
 
@@ -17,21 +17,6 @@
           </v-list-item-icon>
           <v-list-item-title>{{ item.title }}</v-list-item-title>
         </v-list-item>
-        <v-list-group
-          v-if="m.mode == 'secret'"
-          active-class="deep-purple--text text--accent-4"
-        >
-          <v-list-item
-            v-for="item in items_full"
-            :key="item.model"
-            @click="onItemClick(item)"
-          >
-            <v-list-item-icon>
-              <v-icon>{{ item.icon }}</v-icon>
-            </v-list-item-icon>
-            <v-list-item-title>{{ item.title }}</v-list-item-title>
-          </v-list-item>
-        </v-list-group>
       </v-list>
     </v-navigation-drawer>
   </div>
@@ -51,8 +36,6 @@ import { defineComponent, onUnmounted, reactive } from "@vue/composition-api";
 import router from "@/router";
 import * as rx from "@codianz/rx";
 import * as loglike from "@codianz/loglike";
-import { map } from "rxjs/operators";
-import { timer } from "rxjs";
 const log = loglike.Null;
 type Item = {
   icon: string;
@@ -77,7 +60,7 @@ export default defineComponent({
   setup() {
     const m = reactive({
       drawer: false,
-      title: "ダッシュボード",
+      title: "ユーザー",
       dateTime: "",
       path: ""
     });
