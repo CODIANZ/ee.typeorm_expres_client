@@ -81,13 +81,11 @@ import * as entity from "../entity";
 import { DataTableHeader } from "vuetify";
 import { FindConditions } from "typeorm";
 
-type OrderDesc = "ASC" | "DESC" | 1 | -1 | undefined;
-type Options = {
+type OrderDesc = "ASC" | "DESC" | undefined;
+type RequestOptions = {
   entityName: entity.EntityName;
-  order?: {};
   orderby: string;
   orderdesc: OrderDesc;
-  where?: FindConditions<entity.EntityMap>;
   searchColumn: entity.EntityName;
   searchText: string;
   skip: number;
@@ -140,7 +138,7 @@ export default defineComponent({
     };
 
     async function updateList() {
-      const opt: Options = {
+      const opt: RequestOptions = {
         entityName: m.entity!,
         orderby: m.sortBy,
         orderdesc: m.sortDesc ? "DESC" : "ASC",
@@ -159,6 +157,10 @@ export default defineComponent({
       () => [m.searchColumn, m.searchText],
       () => {
         if (m.searchColumn || m.searchText) updateList();
+        if (!m.searchColumn || !m.searchText) {
+          m.page = 1;
+          updateList();
+        }
       }
     );
 
