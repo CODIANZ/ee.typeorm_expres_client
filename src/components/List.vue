@@ -37,6 +37,7 @@
             ></v-text-field>
           </v-row>
           <v-spacer></v-spacer>
+
           <v-dialog v-model="m.dialog" max-width="500px">
             <template v-slot:activator="{ on, attrs }">
               <v-btn color="primary" dark class="mb-2" v-bind="attrs" v-on="on">
@@ -50,16 +51,10 @@
               <v-card-text>
                 <v-container>
                   <v-row>
-                    <template v-for="(column, index) in m.selectersItems">
-                      <v-col
-                        v-if="!index == 0"
-                        cols="12"
-                        sm="6"
-                        md="4"
-                        :key="index"
-                      >
+                    <template v-for="(column, index) in m.editableColumn">
+                      <v-col cols="12" sm="6" md="4" :key="index">
                         <v-text-field
-                          v-model="m.editedItem[index]"
+                          v-model="m.editedItem[column]"
                           :label="column"
                         >
                         </v-text-field>
@@ -77,6 +72,7 @@
               </v-card-actions>
             </v-card>
           </v-dialog>
+
           <v-dialog v-model="m.dialogDelete" max-width="500px">
             <v-card>
               <v-card-title class="text-h5"
@@ -101,16 +97,6 @@
         <v-icon small @click="deleteItem(item)"> mdi-delete </v-icon>
       </template>
     </v-data-table>
-    <v-container>
-      <template>
-        <v-container fluid>
-          <v-radio-group v-model="m.entity" mandatory>
-            <v-radio label="User" value="User"></v-radio>
-            <v-radio label="Book" value="Book"></v-radio>
-          </v-radio-group>
-        </v-container>
-      </template>
-    </v-container>
     <hr />
     <div v-if="m.response">
       <span>
@@ -127,11 +113,19 @@
         レスポンスデータ：
         {{ m.response.data }}
       </span>
+      <hr />
+      <span>
+        debug：
+        {{ m.defaultItem }}
+        {{ m.editedItem }}
+        {{ m.editableColumn }}
+      </span>
     </div>
   </v-container>
 </template>
 
 <script lang="ts">
+import vue from "vue";
 import {
   defineComponent,
   reactive,
@@ -141,7 +135,6 @@ import {
 import { AxiosResponse } from "axios";
 import * as helper from "../DBHelper";
 import * as entity from "../entity";
-import { DataTableHeader } from "vuetify";
 
 type OrderDesc = "ASC" | "DESC" | undefined;
 type FindRequestOptions = {
@@ -164,9 +157,9 @@ export default defineComponent({
       required: true
     }
   },
-  setup(props, { root }) {
+  setup(props) {
     const m = reactive({
-      headers: undefined as DataTableHeader[] | undefined,
+      headers: undefined as entity.ExtendedDataTableHeader[] | undefined,
       selectersItems: [],
       items: [] as any[],
       entity: undefined as entity.EntityName | undefined,
@@ -185,8 +178,9 @@ export default defineComponent({
       dialog: false,
       dialogDelete: false,
       editedIndex: -1,
-      editedItem: [] as any[],
-      defaultItem: []
+      editableColumn: [],
+      editedItem: {} as Item,
+      defaultItem: {} as any
     });
     const formTitle = computed(() => (m.editedIndex === -1 ? "追加" : "編集"));
 
@@ -206,12 +200,26 @@ export default defineComponent({
 
     const buildHeaders = () => {
       m.headers = entity.ListDescriptions[m.entity!].headers();
-      m.headers.push({ text: "Actions", value: "actions", sortable: false });
+      m.headers.push({
+        text: "Actions",
+        value: "actions",
+        sortable: false,
+        editable: false
+      });
       //prettier-ignore
-      m.selectersItems = (entity.ListDescriptions[m.entity!].headers() as any).map((x: DataTableHeader) => x.value);
+      m.selectersItems = (entity.ListDescriptions[m.entity!].headers() as any).map((x: entity.ExtendedDataTableHeader) => x.value);
+      //prettier-ignore
+      m.editableColumn = (entity.ListDescriptions[m.entity!].headers() as any).filter((x: entity.ExtendedDataTableHeader) => x.editable == true)
+      .map((x: entity.ExtendedDataTableHeader) => x.value);
+      //prettier-ignore
+      (entity.ListDescriptions[m.entity!].headers() as any).forEach((x: entity.ExtendedDataTableHeader) => {
+        if(x.default){
+          m.defaultItem[x.value] = x.default;
+      }})
+      m.editedItem = m.defaultItem;
     };
 
-    async function updateList() {
+    const updateList = async () => {
       const opt: FindRequestOptions = {
         entityName: m.entity!,
         orderby: m.sortBy,
@@ -227,17 +235,20 @@ export default defineComponent({
       m.itemsLength = m.response!.data.length;
       m.pageCount = Math.ceil(m.itemsLength / 10);
       m.isLoad = false;
-    }
+    };
 
-    const deleteItem = (item: Object) => {
+    const setEditedItem = (item: Item) => {
+      m.editedItem = { ...item };
+    };
+    const deleteItem = (item: Item) => {
       m.editedIndex = m.items.indexOf(item);
-      m.editedItem = Object.values(item).map((value) => value);
+      setEditedItem(item);
       m.dialogDelete = true;
     };
 
     async function deleteItemConfirm() {
       // TODO:optの型つけ
-      const opt = { entityName: m.entity, deleteItem: m.editedItem[0] };
+      const opt = { entityName: m.entity, deleteItem: m.editedItem.id };
       await helper.deleteItem(opt);
       await updateList();
       closeDelete();
@@ -245,35 +256,38 @@ export default defineComponent({
 
     const closeDelete = () => {
       m.dialogDelete = false;
-      root.$nextTick(() => {
+      vue.nextTick(() => {
         m.editedItem = m.defaultItem;
         m.editedIndex = -1;
       });
     };
 
-    const editItem = (item: Object) => {
+    const editItem = (item: Item) => {
       m.editedIndex = m.items.indexOf(item);
-      m.editedItem = Object.values(item).map((value) => value);
+      setEditedItem(item);
       m.dialog = true;
     };
 
     const close = () => {
       m.dialog = false;
-      root.$nextTick(() => {
-        m.editedItem = m.defaultItem;
-        m.editedIndex = -1;
-      });
+      m.editedItem = m.defaultItem;
+      m.editedIndex = -1;
     };
 
-    const save = () => {
+    const save = async () => {
       if (m.editedIndex != -1) {
         // update
-        let data = {};
-
+        let data = { ...m.editedItem };
         const opt = { entityName: m.entity, data: data };
+        m.response = await helper.updateItem(opt);
       } else {
         // create
+        let data = { ...m.editedItem };
+        const opt = { entityName: m.entity, data: data };
+        m.response = await helper.createItem(opt);
       }
+      updateList();
+      close();
     };
 
     watch(
@@ -286,7 +300,6 @@ export default defineComponent({
         }
       }
     );
-
     watch(
       () => [m.sortBy, m.sortDesc],
       () => {

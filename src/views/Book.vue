@@ -1,5 +1,5 @@
 <template>
-  <List :entity="`Book`" />
+  <List entity="Book" />
 </template>
 
 <script lang="ts">

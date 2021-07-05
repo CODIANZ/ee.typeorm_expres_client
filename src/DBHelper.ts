@@ -12,7 +12,7 @@ type FindRequestOptions = {
   take: number;
 };
 
-const crud_url = "http://localhost:7071/api/GetList";
+const crud_url = "http://localhost:7071/api/DBCrud";
 
 export async function getList(opt: FindRequestOptions) {
   let res;
@@ -43,7 +43,7 @@ export async function deleteItem(opt: any) {
 export async function createItem(opt: any) {
   let res;
   await axios
-    .post(crud_url, { params: opt })
+    .post(crud_url, opt)
     .then((response) => {
       res = response;
     })
@@ -56,7 +56,7 @@ export async function createItem(opt: any) {
 export async function updateItem(opt: any) {
   let res;
   await axios
-    .put(crud_url, { params: opt })
+    .put(crud_url, opt)
     .then((response) => {
       res = response;
     })
