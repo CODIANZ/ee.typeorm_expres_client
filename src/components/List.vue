@@ -20,56 +20,82 @@
             <v-toolbar-title class="mx-4">{{ m.entity }}</v-toolbar-title>
             <v-divider class="mx-4" inset vertical></v-divider>
             <v-select
-              v-model="m.searchColumn"
-              :items="m.selectersItems"
+              v-model="m.search.searchColumn"
+              :items="m.search.columnSelecter"
               label="Select"
               return-object
               single-line
               clearable
-            ></v-select>
+            />
             <v-text-field
-              v-model="m.inTyped"
-              append-icon="mdi-magnify"
+              v-model="m.search.inTyped"
               label="Search"
               single-line
               hide-details
               @blur="onBlur"
-            ></v-text-field>
+            />
+            <v-select
+              v-model="m.search.searchType"
+              :items="m.search.typeSelecter"
+              label="Type"
+              return-object
+              single-line
+              clearable
+            />
           </v-row>
           <v-spacer></v-spacer>
 
-          <v-dialog v-model="m.dialog" max-width="500px">
+          <v-dialog v-model="m.dialog" fullscreen>
             <template v-slot:activator="{ on, attrs }">
               <v-btn color="primary" dark class="mb-2" v-bind="attrs" v-on="on">
                 New Item
               </v-btn>
             </template>
             <v-card>
-              <v-card-title>
-                <span class="text-h5">{{ formTitle }}</span>
-              </v-card-title>
-              <v-card-text>
-                <v-container>
-                  <v-row>
-                    <template v-for="(column, index) in m.editableColumn">
-                      <v-col cols="12" sm="6" md="4" :key="index">
-                        <v-text-field
-                          v-model="m.editedItem[column]"
-                          :label="column"
-                        >
-                        </v-text-field>
-                      </v-col>
-                    </template>
-                  </v-row>
-                </v-container>
-              </v-card-text>
-              <v-card-actions>
-                <v-spacer></v-spacer>
-                <v-btn color="blue darken-1" text @click="close">
-                  Cancel
-                </v-btn>
-                <v-btn color="blue darken-1" text @click="save"> Save </v-btn>
-              </v-card-actions>
+              <ValidationObserver v-slot="{ invalid }">
+                <v-card-title>
+                  <span class="text-h5">{{ formTitle }}</span>
+                </v-card-title>
+                <v-card-text>
+                  <v-container>
+                    <v-row>
+                      <template
+                        v-for="(column, index) in m.edit.editableColumn"
+                      >
+                        <v-col cols="12" sm="6" md="4" :key="index">
+                          <ValidationProvider
+                            v-slot="{ errors }"
+                            :name="column"
+                            :rules="m.edit.editedRules[column]"
+                          >
+                            <v-text-field
+                              v-model="m.edit.editedItem[column]"
+                              :label="column"
+                              :error-messages="errors"
+                            >
+                            </v-text-field>
+                          </ValidationProvider>
+                        </v-col>
+                      </template>
+                    </v-row>
+                  </v-container>
+                </v-card-text>
+                <v-card-actions>
+                  <v-spacer></v-spacer>
+                  <v-btn color="blue darken-1" text @click="close">
+                    Cancel
+                  </v-btn>
+                  <v-btn
+                    color="blue darken-1"
+                    text
+                    @click="save"
+                    type="submit"
+                    :disabled="invalid"
+                  >
+                    Save
+                  </v-btn>
+                </v-card-actions>
+              </ValidationObserver>
             </v-card>
           </v-dialog>
 
@@ -116,9 +142,7 @@
       <hr />
       <span>
         debug：
-        {{ m.defaultItem }}
-        {{ m.editedItem }}
-        {{ m.editableColumn }}
+        {{ m.edit.editedRules }}
       </span>
     </div>
   </v-container>
@@ -136,16 +160,20 @@ import { AxiosResponse } from "axios";
 import * as helper from "../DBHelper";
 import * as entity from "../entity";
 
-type OrderDesc = "ASC" | "DESC" | undefined;
-type FindRequestOptions = {
-  entityName: entity.EntityName;
+type RequestBase = { entityName: entity.EntityName };
+type FindRequestOptions = RequestBase & {
   orderby: string;
-  orderdesc: OrderDesc;
+  orderdesc: "ASC" | "DESC" | undefined;
   searchColumn: entity.EntityName;
+  searchType: string;
   searchText: string;
   skip: number;
   take: number;
 };
+type DeleteRequestOptions = RequestBase & {
+  deleteItem: string;
+};
+type SaveRequestOptions = RequestBase & {};
 type Item = {
   id?: string;
 };
@@ -160,12 +188,8 @@ export default defineComponent({
   setup(props) {
     const m = reactive({
       headers: undefined as entity.ExtendedDataTableHeader[] | undefined,
-      selectersItems: [] as String[],
       items: [] as any[],
       entity: undefined as entity.EntityName | undefined,
-      searchColumn: undefined as entity.EntityName | undefined,
-      inTyped: "",
-      searchText: "",
       page: 1,
       pageCount: 0,
       itemsLength: 0,
@@ -177,15 +201,33 @@ export default defineComponent({
       isLoad: true,
       dialog: false,
       dialogDelete: false,
-      editedIndex: -1,
-      editableColumn: [] as String[],
-      editedItem: {} as Item,
-      defaultItem: {} as any
+      edit: {
+        editedIndex: -1,
+        editableColumn: [] as string[],
+        editedItem: {} as Item,
+        editedRules: {} as any,
+        defaultItem: {} as any
+      },
+      search: {
+        columnSelecter: [] as string[],
+        typeSelecter: [] as string[],
+        typeSelecterParams: [] as string[],
+        searchColumn: undefined as entity.EntityName | undefined,
+        searchType: "",
+        inTyped: "",
+        searchText: ""
+      }
     });
-    const formTitle = computed(() => (m.editedIndex === -1 ? "追加" : "編集"));
+    // prettier-ignore
+    m.search.typeSelecter = ["と等しい","以外","未満","以下","以上","超","を含む"];
+    // prettier-ignore
+    m.search.typeSelecterParams = ["","Not","LessThan","LessThanOrEqual","MoreThan","MoreThanOrEqual","Like"];
+    const formTitle = computed(() =>
+      m.edit.editedIndex === -1 ? "追加" : "編集"
+    );
 
     const onBlur = () => {
-      m.searchText = m.inTyped;
+      m.search.searchText = m.search.inTyped;
     };
     const updateEntity = (propsEntity: entity.EntityName) => {
       if (entity.isEntity(propsEntity)) {
@@ -208,13 +250,15 @@ export default defineComponent({
         width: 0
       });
       //prettier-ignore
-      m.selectersItems = m.headers.map((x: entity.ExtendedDataTableHeader) => x.value);
+      m.search.columnSelecter = m.headers.map((x: entity.ExtendedDataTableHeader) => x.value);
       //prettier-ignore
-      m.editableColumn = m.headers.filter((x: entity.ExtendedDataTableHeader) => x.editable == true)
+      m.edit.editableColumn = m.headers.filter((x: entity.ExtendedDataTableHeader) => x.editable == true)
       .map((x: entity.ExtendedDataTableHeader) => x.value);
       //prettier-ignore
-      m.headers.forEach((x: entity.ExtendedDataTableHeader) => {if(x.default) m.defaultItem[x.value] = x.default;})
-      m.editedItem = m.defaultItem;
+      m.headers.forEach((x: entity.ExtendedDataTableHeader) => {if(x.default) m.edit.defaultItem[x.value] = x.default;})
+      //prettier-ignore
+      m.headers.forEach((x: entity.ExtendedDataTableHeader) => {if(x.default) m.edit.editedRules[x.value] = x.rules;})
+      m.edit.editedItem = m.edit.defaultItem;
     };
 
     const updateList = async () => {
@@ -222,8 +266,12 @@ export default defineComponent({
         entityName: m.entity!,
         orderby: m.sortBy,
         orderdesc: m.sortDesc ? "DESC" : "ASC",
-        searchColumn: m.searchColumn!,
-        searchText: m.searchText,
+        searchColumn: m.search.searchColumn!,
+        searchType:
+          m.search.typeSelecterParams[
+            m.search.typeSelecter.indexOf(m.search.searchType)
+          ],
+        searchText: m.search.searchText,
         skip: (m.page - 1) * 10,
         take: m.itemsPerPage !== -1 ? m.itemsPerPage : m.itemsLength
       };
@@ -236,14 +284,16 @@ export default defineComponent({
     };
 
     const deleteItem = (item: Item) => {
-      m.editedIndex = m.items.indexOf(item);
-      m.editedItem = { ...item };
+      m.edit.editedIndex = m.items.indexOf(item);
+      m.edit.editedItem = { ...item };
       m.dialogDelete = true;
     };
 
     const deleteItemConfirm = async () => {
-      // TODO:optの型つけ
-      const opt = { entityName: m.entity, deleteItem: m.editedItem.id };
+      const opt: DeleteRequestOptions = {
+        entityName: m.entity!,
+        deleteItem: m.edit.editedItem.id!
+      };
       await helper.deleteItem(opt);
       await updateList();
       closeDelete();
@@ -252,32 +302,32 @@ export default defineComponent({
     const closeDelete = () => {
       m.dialogDelete = false;
       vue.nextTick(() => {
-        m.editedItem = m.defaultItem;
-        m.editedIndex = -1;
+        m.edit.editedItem = m.edit.defaultItem;
+        m.edit.editedIndex = -1;
       });
     };
 
     const editItem = (item: Item) => {
-      m.editedIndex = m.items.indexOf(item);
-      m.editedItem = { ...item };
+      m.edit.editedIndex = m.items.indexOf(item);
+      m.edit.editedItem = { ...item };
       m.dialog = true;
     };
 
     const close = () => {
       m.dialog = false;
-      m.editedItem = m.defaultItem;
-      m.editedIndex = -1;
+      m.edit.editedItem = m.edit.defaultItem;
+      m.edit.editedIndex = -1;
     };
 
     const save = async () => {
-      if (m.editedIndex != -1) {
+      if (m.edit.editedIndex != -1) {
         // update
-        let data = { ...m.editedItem };
+        let data = { ...m.edit.editedItem };
         const opt = { entityName: m.entity, data: data };
         m.response = await helper.updateItem(opt);
       } else {
         // create
-        let data = { ...m.editedItem };
+        let data = { ...m.edit.editedItem };
         const opt = { entityName: m.entity, data: data };
         m.response = await helper.createItem(opt);
       }
@@ -286,10 +336,10 @@ export default defineComponent({
     };
 
     watch(
-      () => [m.searchColumn, m.searchText],
+      () => [m.search.searchColumn, m.search.searchText],
       () => {
-        if (m.searchColumn || m.searchText) updateList();
-        if (!m.searchColumn || !m.searchText) {
+        if (m.search.searchColumn || m.search.searchText) updateList();
+        if (!m.search.searchColumn || !m.search.searchText) {
           m.page = 1;
           updateList();
         }

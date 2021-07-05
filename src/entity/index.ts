@@ -1,5 +1,6 @@
 import { FindManyOptions } from "typeorm";
 import { DataTableHeader } from "vuetify";
+import { VDatePicker, VTextField } from "vuetify/lib";
 import { Book } from "./Book";
 import { User } from "./User";
 
@@ -49,21 +50,24 @@ export const ListDescriptions: {
         sortable: true,
         editable: true,
         value: "firstName",
-        default: "aa"
+        default: "aa",
+        rules: "required"
       },
       {
         text: "lastName",
         sortable: true,
         editable: true,
         value: "lastName",
-        default: "aa"
+        default: "aa",
+        rules: "required"
       },
       {
         text: "age",
         sortable: true,
         editable: true,
         value: "age",
-        default: "0"
+        default: "0",
+        rules: "required|numeric"
       }
     ]
   },
@@ -76,14 +80,15 @@ export const ListDescriptions: {
         sortable: true,
         editable: true,
         value: "title",
-        default: "aa"
+        rules: "required"
       },
       {
         text: "author",
         sortable: true,
         editable: true,
         value: "author",
-        default: "aa"
+        default: "aa",
+        rules: "required"
       },
       {
         text: "publish_at",

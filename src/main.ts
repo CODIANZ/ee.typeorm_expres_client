@@ -5,6 +5,7 @@ import VueCompositionApi from "@vue/composition-api";
 import axios from "axios";
 import VueAxios from "vue-axios";
 import vuetify from "./plugins/vuetify";
+import "@/plugins/vee-validate";
 import "@mdi/font/css/materialdesignicons.css";
 import "@babel/polyfill";
 
