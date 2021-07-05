@@ -12,7 +12,7 @@ type FindRequestOptions = {
   take: number;
 };
 
-const crud_url = "http://localhost:7071/api/DBCrud";
+const crud_url = "http://localhost:7081/api/DBCrud";
 
 export async function getList(opt: FindRequestOptions) {
   let res;

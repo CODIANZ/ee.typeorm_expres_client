@@ -147,7 +147,7 @@ type FindRequestOptions = {
   take: number;
 };
 type Item = {
-  id?: number;
+  id?: string;
 };
 
 export default defineComponent({
@@ -160,7 +160,7 @@ export default defineComponent({
   setup(props) {
     const m = reactive({
       headers: undefined as entity.ExtendedDataTableHeader[] | undefined,
-      selectersItems: [],
+      selectersItems: [] as String[],
       items: [] as any[],
       entity: undefined as entity.EntityName | undefined,
       searchColumn: undefined as entity.EntityName | undefined,
@@ -178,7 +178,7 @@ export default defineComponent({
       dialog: false,
       dialogDelete: false,
       editedIndex: -1,
-      editableColumn: [],
+      editableColumn: [] as String[],
       editedItem: {} as Item,
       defaultItem: {} as any
     });
@@ -204,18 +204,16 @@ export default defineComponent({
         text: "Actions",
         value: "actions",
         sortable: false,
-        editable: false
+        editable: false,
+        width: 0
       });
       //prettier-ignore
-      m.selectersItems = (entity.ListDescriptions[m.entity!].headers() as any).map((x: entity.ExtendedDataTableHeader) => x.value);
+      m.selectersItems = m.headers.map((x: entity.ExtendedDataTableHeader) => x.value);
       //prettier-ignore
-      m.editableColumn = (entity.ListDescriptions[m.entity!].headers() as any).filter((x: entity.ExtendedDataTableHeader) => x.editable == true)
+      m.editableColumn = m.headers.filter((x: entity.ExtendedDataTableHeader) => x.editable == true)
       .map((x: entity.ExtendedDataTableHeader) => x.value);
       //prettier-ignore
-      (entity.ListDescriptions[m.entity!].headers() as any).forEach((x: entity.ExtendedDataTableHeader) => {
-        if(x.default){
-          m.defaultItem[x.value] = x.default;
-      }})
+      m.headers.forEach((x: entity.ExtendedDataTableHeader) => {if(x.default) m.defaultItem[x.value] = x.default;})
       m.editedItem = m.defaultItem;
     };
 
@@ -237,22 +235,19 @@ export default defineComponent({
       m.isLoad = false;
     };
 
-    const setEditedItem = (item: Item) => {
-      m.editedItem = { ...item };
-    };
     const deleteItem = (item: Item) => {
       m.editedIndex = m.items.indexOf(item);
-      setEditedItem(item);
+      m.editedItem = { ...item };
       m.dialogDelete = true;
     };
 
-    async function deleteItemConfirm() {
+    const deleteItemConfirm = async () => {
       // TODO:optの型つけ
       const opt = { entityName: m.entity, deleteItem: m.editedItem.id };
       await helper.deleteItem(opt);
       await updateList();
       closeDelete();
-    }
+    };
 
     const closeDelete = () => {
       m.dialogDelete = false;
@@ -264,7 +259,7 @@ export default defineComponent({
 
     const editItem = (item: Item) => {
       m.editedIndex = m.items.indexOf(item);
-      setEditedItem(item);
+      m.editedItem = { ...item };
       m.dialog = true;
     };
 
@@ -286,7 +281,7 @@ export default defineComponent({
         const opt = { entityName: m.entity, data: data };
         m.response = await helper.createItem(opt);
       }
-      updateList();
+      await updateList();
       close();
     };
 

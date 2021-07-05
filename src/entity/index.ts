@@ -31,6 +31,7 @@ export interface ExtendedDataTableHeader<T extends any = any>
   extends DataTableHeader {
   editable: boolean;
   default?: string;
+  rules?: string;
 }
 export type ListDescription<T extends EntityName> = {
   basicOptions: () => FindManyOptions<EntityMap[T]>;
