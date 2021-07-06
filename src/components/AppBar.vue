@@ -53,6 +53,11 @@ const items: Item[] = [
     icon: "mdi-account",
     title: "ユーザー",
     path: "/user"
+  },
+  {
+    icon: "mdi-account",
+    title: "権限",
+    path: "/role"
   }
 ];
 

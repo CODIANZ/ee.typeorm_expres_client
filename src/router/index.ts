@@ -19,6 +19,12 @@ const routes: Array<RouteConfig> = [
     path: "/book",
     component: () => import("../views/Book.vue"),
     props: true
+  },
+  {
+    name: "role",
+    path: "/role",
+    component: () => import("../views/Role.vue"),
+    props: true
   }
 ];
 

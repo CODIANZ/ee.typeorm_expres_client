@@ -1,7 +1,7 @@
 import { FindManyOptions } from "typeorm";
 import { DataTableHeader } from "vuetify";
-import { VDatePicker, VTextField } from "vuetify/lib";
 import { Book } from "./Book";
+import { Role } from "./Role";
 import { User } from "./User";
 
 export * from "./Book";
@@ -10,19 +10,22 @@ export * from "./User";
 export type EntityMap = {
   User: User;
   Book: Book;
+  Role: Role;
 };
 export type EntityName = keyof EntityMap;
 
 export const entities = [User, Book];
 export const EntityNames: { [E in EntityName]: E } = {
   User: "User",
-  Book: "Book"
+  Book: "Book",
+  Role: "Role"
 };
 export const GetListTitle: {
   [E in EntityName]: () => string;
 } = {
   User: () => "ユーザー",
-  Book: () => "本"
+  Book: () => "本",
+  Role: () => "権限"
 };
 export function isEntity(s: unknown): s is EntityName {
   return typeof s === "string" && s in EntityNames;
@@ -34,15 +37,20 @@ export interface ExtendedDataTableHeader<T extends any = any>
   default?: string;
   rules?: string;
 }
+export interface Authority {
+  creatable: boolean;
+  editable: boolean;
+  deletable: boolean;
+}
 export type ListDescription<T extends EntityName> = {
-  basicOptions: () => FindManyOptions<EntityMap[T]>;
+  authorities: Authority;
   headers: () => ExtendedDataTableHeader<EntityMap[T]>[];
 };
 export const ListDescriptions: {
   [E in EntityName]: ListDescription<E>;
 } = {
   User: {
-    basicOptions: () => ({}),
+    authorities: { creatable: true, editable: true, deletable: true },
     headers: () => [
       { text: "id", sortable: true, editable: false, value: "id" },
       {
@@ -68,11 +76,30 @@ export const ListDescriptions: {
         value: "age",
         default: "0",
         rules: "required|numeric"
+      },
+      {
+        text: "role",
+        sortable: true,
+        editable: true,
+        value: "role",
+        default: "read"
+      }
+    ]
+  },
+  Role: {
+    authorities: { creatable: true, editable: false, deletable: false },
+    headers: () => [
+      { text: "id", sortable: true, editable: false, value: "id" },
+      {
+        text: "role",
+        sortable: true,
+        editable: true,
+        value: "role"
       }
     ]
   },
   Book: {
-    basicOptions: () => ({}),
+    authorities: { creatable: true, editable: true, deletable: true },
     headers: () => [
       { text: "id", sortable: true, editable: false, value: "id" },
       {
