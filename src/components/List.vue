@@ -47,7 +47,14 @@
 
           <v-dialog v-model="m.dialog" fullscreen>
             <template v-slot:activator="{ on, attrs }">
-              <v-btn color="primary" dark class="mb-2" v-bind="attrs" v-on="on">
+              <v-btn
+                v-if="m.authority.creatable"
+                color="primary"
+                dark
+                class="mb-2"
+                v-bind="attrs"
+                v-on="on"
+              >
                 New Item
               </v-btn>
             </template>
@@ -59,22 +66,7 @@
                 <v-card-text>
                   <v-container>
                     <v-row>
-                      <template v-for="(column, index) in m.editableColumn">
-                        <v-col cols="12" sm="6" md="4" :key="index">
-                          <ValidationProvider
-                            v-slot="{ errors }"
-                            :name="column"
-                            :rules="m.editedRules[column]"
-                          >
-                            <v-text-field
-                              v-model="m.editedItem[column]"
-                              :label="column"
-                              :error-messages="errors"
-                            >
-                            </v-text-field>
-                          </ValidationProvider>
-                        </v-col>
-                      </template>
+                      <slot name="editor" />
                     </v-row>
                   </v-container>
                 </v-card-text>
@@ -117,8 +109,17 @@
         </v-toolbar>
       </template>
       <template v-slot:[`item.actions`]="{ item }">
-        <v-icon small class="mr-2" @click="editItem(item)"> mdi-pencil </v-icon>
-        <v-icon small @click="deleteItem(item)"> mdi-delete </v-icon>
+        <v-icon
+          v-if="m.authority.editable"
+          small
+          class="mr-2"
+          @click="editItem(item)"
+        >
+          mdi-pencil
+        </v-icon>
+        <v-icon v-if="m.authority.deletable" small @click="deleteItem(item)">
+          mdi-delete
+        </v-icon>
       </template>
     </v-data-table>
     <hr />
@@ -155,26 +156,11 @@ import {
   computed
 } from "@vue/composition-api";
 import { AxiosResponse } from "axios";
+import { FindRequestOptions, DeleteRequestOptions } from "../@types/request";
 import * as helper from "../DBHelper";
 import * as entity from "../entity";
 
-type RequestBase = { entityName: entity.EntityName };
-type FindRequestOptions = RequestBase & {
-  orderby: string;
-  orderdesc: "ASC" | "DESC" | undefined;
-  searchColumn: entity.EntityName;
-  searchType: string;
-  searchText: string;
-  skip: number;
-  take: number;
-};
-type DeleteRequestOptions = RequestBase & {
-  deleteItem: string;
-};
-type SaveRequestOptions = RequestBase & {};
-type Item = {
-  id?: string;
-};
+type Item = { id?: string };
 type SearchType = { text: string; value: string };
 
 export default defineComponent({
@@ -182,13 +168,15 @@ export default defineComponent({
     entity: {
       type: String as () => entity.EntityName,
       required: true
-    }
+    },
+    editedItem: {}
   },
-  setup(props) {
+  setup(props, context) {
     const m = reactive({
-      headers: undefined as entity.ExtendedDataTableHeader[] | undefined,
-      items: [] as any[],
       entity: undefined as entity.EntityName | undefined,
+      headers: undefined as entity.ExtendedDataTableHeader[] | undefined,
+      authority: undefined as entity.Authority | undefined,
+      items: [] as any[],
       page: 1,
       pageCount: 0,
       itemsLength: 0,
@@ -241,6 +229,8 @@ export default defineComponent({
 
     const buildHeaders = () => {
       m.headers = entity.ListDescriptions[m.entity!].headers();
+      //prettier-ignore
+      m.columnSelecter = m.headers.map((x: entity.ExtendedDataTableHeader) => x.value);
       m.headers.push({
         text: "Actions",
         value: "actions",
@@ -248,15 +238,9 @@ export default defineComponent({
         editable: false,
         width: 0
       });
-      //prettier-ignore
-      m.columnSelecter = m.headers.map((x: entity.ExtendedDataTableHeader) => x.value);
-      //prettier-ignore
-      m.editableColumn = m.headers.filter((x: entity.ExtendedDataTableHeader) => x.editable == true)
-      .map((x: entity.ExtendedDataTableHeader) => x.value);
+      m.authority = entity.ListDescriptions[m.entity!].authorities;
       //prettier-ignore
       m.headers.forEach((x: entity.ExtendedDataTableHeader) => {if(x.default) m.defaultItem[x.value] = x.default;})
-      //prettier-ignore
-      m.headers.forEach((x: entity.ExtendedDataTableHeader) => {if(x.default) m.editedRules[x.value] = x.rules;})
       m.editedItem = m.defaultItem;
     };
 
@@ -305,7 +289,7 @@ export default defineComponent({
 
     const editItem = (item: Item) => {
       m.editedIndex = m.items.indexOf(item);
-      m.editedItem = { ...item };
+      context.emit("setItem", item);
       m.dialog = true;
     };
 
@@ -318,12 +302,12 @@ export default defineComponent({
     const save = async () => {
       if (m.editedIndex != -1) {
         // update
-        let data = { ...m.editedItem };
+        let data = props.editedItem;
         const opt = { entityName: m.entity, data: data };
         m.response = await helper.updateItem(opt);
       } else {
         // create
-        let data = { ...m.editedItem };
+        let data = props.editedItem;
         const opt = { entityName: m.entity, data: data };
         m.response = await helper.createItem(opt);
       }

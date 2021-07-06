@@ -1,20 +1,6 @@
 import * as entity from "./entity";
+import { FindRequestOptions, DeleteRequestOptions } from "./@types/request";
 import axios from "axios";
-
-type RequestBase = { entityName: entity.EntityName };
-type FindRequestOptions = RequestBase & {
-  orderby: string;
-  orderdesc: "ASC" | "DESC" | undefined;
-  searchColumn: entity.EntityName;
-  searchType: string;
-  searchText: string;
-  skip: number;
-  take: number;
-};
-type DeleteRequestOptions = RequestBase & {
-  deleteItem: string;
-};
-type SaveRequestOptions = RequestBase & {};
 
 const crud_url = "http://localhost:7081/api/DBCrud";
 
