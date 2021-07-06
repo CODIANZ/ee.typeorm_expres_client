@@ -189,9 +189,7 @@ export default defineComponent({
       dialog: false,
       dialogDelete: false,
       editedIndex: -1,
-      editableColumn: [] as string[],
       editedItem: {} as Item,
-      editedRules: {} as any,
       defaultItem: {} as any,
       columnSelecter: [] as string[],
       typeSelecter: [] as SearchType[],
@@ -241,7 +239,7 @@ export default defineComponent({
       m.authority = entity.ListDescriptions[m.entity!].authorities;
       //prettier-ignore
       m.headers.forEach((x: entity.ExtendedDataTableHeader) => {if(x.default) m.defaultItem[x.value] = x.default;})
-      m.editedItem = m.defaultItem;
+      context.emit("setItem", m.defaultItem);
     };
 
     const updateList = async () => {
@@ -282,7 +280,7 @@ export default defineComponent({
     const closeDelete = () => {
       m.dialogDelete = false;
       vue.nextTick(() => {
-        m.editedItem = m.defaultItem;
+        context.emit("setItem", m.defaultItem);
         m.editedIndex = -1;
       });
     };
@@ -295,7 +293,7 @@ export default defineComponent({
 
     const close = () => {
       m.dialog = false;
-      m.editedItem = m.defaultItem;
+      context.emit("setItem", m.defaultItem);
       m.editedIndex = -1;
     };
 
@@ -319,7 +317,7 @@ export default defineComponent({
       () => [m.searchColumn, m.searchText, m.searchType],
       () => {
         if (m.searchColumn || m.searchText || m.searchType) updateList();
-        if (!m.searchColumn || !m.searchText || !m.searchType) {
+        else if (!m.searchColumn || !m.searchText || !m.searchType) {
           m.page = 1;
           updateList();
         }

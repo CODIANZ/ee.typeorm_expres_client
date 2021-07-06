@@ -94,7 +94,8 @@ export const ListDescriptions: {
         text: "role",
         sortable: true,
         editable: true,
-        value: "role"
+        value: "role",
+        default: "default"
       }
     ]
   },
@@ -114,15 +115,13 @@ export const ListDescriptions: {
         sortable: true,
         editable: true,
         value: "author",
-        default: "aa",
         rules: "required"
       },
       {
         text: "publish_at",
         sortable: true,
         editable: true,
-        value: "publish_at",
-        default: Date()
+        value: "publish_at"
       }
     ]
   }

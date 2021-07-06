@@ -4,7 +4,7 @@
       <v-col cols="12" sm="6" md="4">
         <ValidationProvider
           v-slot="{ errors }"
-          name="role"
+          name="firstName"
           :rules="m.editedRules.firstName"
         >
           <v-text-field
@@ -79,6 +79,7 @@ export default defineComponent({
       });
     const setItem = (item: Item) => {
       m.editedItem = item;
+      console.log(item);
     };
 
     return { m, setItem };

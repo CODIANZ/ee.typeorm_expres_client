@@ -22,15 +22,6 @@
   </div>
 </template>
 
-<style scoped>
-.date-time {
-  font-family: "Courier New", Courier, monospace;
-  font-size: 18px;
-  font-weight: 800;
-  color: #888;
-}
-</style>
-
 <script lang="ts">
 import { defineComponent, onUnmounted, reactive } from "@vue/composition-api";
 import router from "@/router";
@@ -45,19 +36,19 @@ type Item = {
 
 const items: Item[] = [
   {
-    icon: "mdi-book-open-variant",
-    title: "本",
-    path: "/book"
-  },
-  {
     icon: "mdi-account",
     title: "ユーザー",
     path: "/user"
   },
   {
-    icon: "mdi-account",
+    icon: "mdi-account-check",
     title: "権限",
     path: "/role"
+  },
+  {
+    icon: "mdi-book-open-variant",
+    title: "本",
+    path: "/book"
   }
 ];
 
