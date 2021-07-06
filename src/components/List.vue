@@ -174,6 +174,7 @@ export default defineComponent({
   setup(props, context) {
     const m = reactive({
       entity: undefined as entity.EntityName | undefined,
+      relations: "",
       headers: undefined as entity.ExtendedDataTableHeader[] | undefined,
       authority: undefined as entity.Authority | undefined,
       items: [] as any[],
@@ -217,6 +218,7 @@ export default defineComponent({
     const updateEntity = (propsEntity: entity.EntityName) => {
       if (entity.isEntity(propsEntity)) {
         m.entity = propsEntity;
+        m.relations = entity.ListDescriptions[m.entity!].relations;
         m.page = 1;
         m.sortBy = "";
         m.sortDesc = true;
@@ -245,6 +247,7 @@ export default defineComponent({
     const updateList = async () => {
       const opt: FindRequestOptions = {
         entityName: m.entity!,
+        relations: m.relations,
         orderby: m.sortBy,
         orderdesc: m.sortDesc ? "DESC" : "ASC",
         searchColumn: m.searchColumn!,
@@ -270,6 +273,7 @@ export default defineComponent({
     const deleteItemConfirm = async () => {
       const opt: DeleteRequestOptions = {
         entityName: m.entity!,
+        relations: m.relations,
         deleteItem: m.editedItem.id!
       };
       await helper.deleteItem(opt);

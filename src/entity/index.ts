@@ -43,6 +43,7 @@ export interface Authority {
   deletable: boolean;
 }
 export type ListDescription<T extends EntityName> = {
+  relations: string;
   authorities: Authority;
   headers: () => ExtendedDataTableHeader<EntityMap[T]>[];
 };
@@ -50,6 +51,7 @@ export const ListDescriptions: {
   [E in EntityName]: ListDescription<E>;
 } = {
   User: {
+    relations: "roles",
     authorities: { creatable: true, editable: true, deletable: true },
     headers: () => [
       { text: "id", sortable: true, editable: false, value: "id" },
@@ -81,12 +83,13 @@ export const ListDescriptions: {
         text: "role",
         sortable: true,
         editable: true,
-        value: "role",
+        value: "roles[0].role",
         default: "read"
       }
     ]
   },
   Role: {
+    relations: "User",
     authorities: { creatable: true, editable: false, deletable: false },
     headers: () => [
       { text: "id", sortable: true, editable: false, value: "id" },
@@ -100,6 +103,7 @@ export const ListDescriptions: {
     ]
   },
   Book: {
+    relations: "",
     authorities: { creatable: true, editable: true, deletable: true },
     headers: () => [
       { text: "id", sortable: true, editable: false, value: "id" },
@@ -126,19 +130,3 @@ export const ListDescriptions: {
     ]
   }
 };
-
-export type RequestBase = {
-  entity: keyof EntityMap;
-};
-
-type RequestUser = RequestBase & {
-  entity: "User";
-  query: FindManyOptions<EntityMap["User"]>;
-};
-
-type RequestBook = RequestBase & {
-  entity: "Book";
-  query: FindManyOptions<EntityMap["Book"]>;
-};
-
-export type Request = RequestUser | RequestBook;
