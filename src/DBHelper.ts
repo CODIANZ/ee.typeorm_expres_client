@@ -1,16 +1,20 @@
 import * as entity from "./entity";
 import axios from "axios";
 
-type OrderDesc = "ASC" | "DESC" | undefined;
-type FindRequestOptions = {
-  entityName: entity.EntityName;
+type RequestBase = { entityName: entity.EntityName };
+type FindRequestOptions = RequestBase & {
   orderby: string;
-  orderdesc: OrderDesc;
+  orderdesc: "ASC" | "DESC" | undefined;
   searchColumn: entity.EntityName;
+  searchType: string;
   searchText: string;
   skip: number;
   take: number;
 };
+type DeleteRequestOptions = RequestBase & {
+  deleteItem: string;
+};
+type SaveRequestOptions = RequestBase & {};
 
 const crud_url = "http://localhost:7081/api/DBCrud";
 
@@ -27,7 +31,7 @@ export async function getList(opt: FindRequestOptions) {
   return res;
 }
 
-export async function deleteItem(opt: any) {
+export async function deleteItem(opt: DeleteRequestOptions) {
   let res;
   await axios
     .delete(crud_url, { params: opt })
