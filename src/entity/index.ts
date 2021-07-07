@@ -76,15 +76,15 @@ export const ListDescriptions: {
         rules: "required|numeric"
       },
       {
-        text: "role",
-        sortable: true,
-        value: "role",
+        text: "roles",
+        sortable: false,
+        value: "roles",
         default: "read"
       }
     ]
   },
   Role: {
-    relations: "User",
+    relations: "",
     authorities: { creatable: true, editable: false, deletable: false },
     headers: () => [
       { text: "id", sortable: true, value: "id" },

@@ -162,7 +162,7 @@ import * as helper from "../DBHelper";
 import * as entity from "../entity";
 
 type Item = { id?: string };
-type SearchType = { text: string; value: string };
+type SelecterItem = { text: string; value: string };
 
 export default defineComponent({
   props: {
@@ -170,7 +170,7 @@ export default defineComponent({
       type: String as () => entity.EntityName,
       required: true
     },
-    editedItem: {}
+    editedItem: { type: Object as () => {} }
   },
   setup(props, context) {
     const m = reactive({
@@ -193,9 +193,9 @@ export default defineComponent({
       editedItem: {} as Item,
       defaultItem: {} as any,
       columnSelecter: [] as string[],
-      typeSelecter: [] as SearchType[],
+      typeSelecter: [] as SelecterItem[],
       searchColumn: undefined as entity.EntityName | undefined,
-      searchType: {} as SearchType,
+      searchType: {} as SelecterItem,
       inTyped: "",
       searchText: ""
     });
@@ -270,7 +270,7 @@ export default defineComponent({
             relationData.forEach((element: any) => {
               _data += " " + element[relationEntity[i]];
             });
-            item[relationEntity[i]] = _data;
+            item[relationProps[i]] = _data;
           }
         });
       }
@@ -316,14 +316,20 @@ export default defineComponent({
 
     const save = async () => {
       let data = props.editedItem;
+      // let data = {
+      //   id: 1,
+      //   firstName: "aa",
+      //   lastName: "ee",
+      //   age: 33,
+      //   roles: [
+      //     {
+      //       id: 999,
+      //       role: "Read2"
+      //     }
+      //   ]
+      // };
       const opt = { entityName: m.entity, data: data };
-      if (m.editedIndex != -1) {
-        // update
-        m.response = await helper.updateItem(opt);
-      } else {
-        // create
-        m.response = await helper.createItem(opt);
-      }
+      m.response = await helper.updateItem(opt);
       await updateList();
       close();
     };
