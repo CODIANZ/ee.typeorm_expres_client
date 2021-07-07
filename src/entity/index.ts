@@ -33,7 +33,6 @@ export function isEntity(s: unknown): s is EntityName {
 
 export interface ExtendedDataTableHeader<T extends any = any>
   extends DataTableHeader {
-  editable: boolean;
   default?: string;
   rules?: string;
 }
@@ -43,7 +42,7 @@ export interface Authority {
   deletable: boolean;
 }
 export type ListDescription<T extends EntityName> = {
-  relations: string;
+  relations: {};
   authorities: Authority;
   headers: () => ExtendedDataTableHeader<EntityMap[T]>[];
 };
@@ -51,14 +50,13 @@ export const ListDescriptions: {
   [E in EntityName]: ListDescription<E>;
 } = {
   User: {
-    relations: "roles",
+    relations: { role: "roles" },
     authorities: { creatable: true, editable: true, deletable: true },
     headers: () => [
-      { text: "id", sortable: true, editable: false, value: "id" },
+      { text: "id", sortable: true, value: "id" },
       {
         text: "firstName",
         sortable: true,
-        editable: true,
         value: "firstName",
         default: "aa",
         rules: "required"
@@ -66,7 +64,6 @@ export const ListDescriptions: {
       {
         text: "lastName",
         sortable: true,
-        editable: true,
         value: "lastName",
         default: "aa",
         rules: "required"
@@ -74,7 +71,6 @@ export const ListDescriptions: {
       {
         text: "age",
         sortable: true,
-        editable: true,
         value: "age",
         default: "0",
         rules: "required|numeric"
@@ -82,8 +78,7 @@ export const ListDescriptions: {
       {
         text: "role",
         sortable: true,
-        editable: true,
-        value: "roles[0].role",
+        value: "role",
         default: "read"
       }
     ]
@@ -92,11 +87,10 @@ export const ListDescriptions: {
     relations: "User",
     authorities: { creatable: true, editable: false, deletable: false },
     headers: () => [
-      { text: "id", sortable: true, editable: false, value: "id" },
+      { text: "id", sortable: true, value: "id" },
       {
         text: "role",
         sortable: true,
-        editable: true,
         value: "role",
         default: "default"
       }
@@ -106,25 +100,22 @@ export const ListDescriptions: {
     relations: "",
     authorities: { creatable: true, editable: true, deletable: true },
     headers: () => [
-      { text: "id", sortable: true, editable: false, value: "id" },
+      { text: "id", sortable: true, value: "id" },
       {
         text: "title",
         sortable: true,
-        editable: true,
         value: "title",
         rules: "required"
       },
       {
         text: "author",
         sortable: true,
-        editable: true,
         value: "author",
         rules: "required"
       },
       {
         text: "publish_at",
         sortable: true,
-        editable: true,
         value: "publish_at"
       }
     ]

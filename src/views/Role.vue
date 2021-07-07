@@ -32,14 +32,10 @@ export default defineComponent({
       editedRules: {} as any,
       editedItem: {} as Item
     });
-    m.editableColumn = entity.ListDescriptions["Role"]
-      .headers()
-      .filter((x: entity.ExtendedDataTableHeader) => x.editable == true)
-      .map((x: entity.ExtendedDataTableHeader) => x.value);
     entity.ListDescriptions["Role"]
       .headers()
       .forEach((x: entity.ExtendedDataTableHeader) => {
-        if (x.default) m.editedRules[x.value] = x.rules;
+        if (x.rules) m.editedRules[x.value] = x.rules;
       });
     const setItem = (item: Item) => {
       m.editedItem = item;

@@ -14,6 +14,7 @@
       :loading="m.isLoad"
       class="elevation-1"
     >
+      <slot name="extendColumn" />
       <template v-slot:top>
         <v-toolbar flat>
           <v-row>
@@ -141,7 +142,7 @@
       <hr />
       <span>
         debug：
-        {{ m.searchType }}
+        {{ m.headers }}
       </span>
     </div>
   </v-container>
@@ -174,12 +175,11 @@ export default defineComponent({
   setup(props, context) {
     const m = reactive({
       entity: undefined as entity.EntityName | undefined,
-      relations: "",
+      relations: {},
       headers: undefined as entity.ExtendedDataTableHeader[] | undefined,
       authority: undefined as entity.Authority | undefined,
       items: [] as any[],
       page: 1,
-      pageCount: 0,
       itemsLength: 0,
       itemsPerPage: 10,
       response: undefined as AxiosResponse | undefined,
@@ -235,7 +235,6 @@ export default defineComponent({
         text: "Actions",
         value: "actions",
         sortable: false,
-        editable: false,
         width: 0
       });
       m.authority = entity.ListDescriptions[m.entity!].authorities;
@@ -260,7 +259,21 @@ export default defineComponent({
       m.response = await helper.getList(opt);
       m.items = m.response!.data.body;
       m.itemsLength = m.response!.data.length;
-      m.pageCount = Math.ceil(m.itemsLength / 10);
+      if (m.relations) {
+        const relationEntity: string[] = Object.keys(m.relations);
+        const relationProps: string[] = Object.values(m.relations);
+        m.items.forEach((item) => {
+          for (let i = 0; i < relationProps.length; i++) {
+            let _data = "";
+            const key = relationProps[i];
+            const relationData = item[key];
+            relationData.forEach((element: any) => {
+              _data += " " + element[relationEntity[i]];
+            });
+            item[relationEntity[i]] = _data;
+          }
+        });
+      }
       m.isLoad = false;
     };
 
@@ -302,15 +315,13 @@ export default defineComponent({
     };
 
     const save = async () => {
+      let data = props.editedItem;
+      const opt = { entityName: m.entity, data: data };
       if (m.editedIndex != -1) {
         // update
-        let data = props.editedItem;
-        const opt = { entityName: m.entity, data: data };
         m.response = await helper.updateItem(opt);
       } else {
         // create
-        let data = props.editedItem;
-        const opt = { entityName: m.entity, data: data };
         m.response = await helper.createItem(opt);
       }
       await updateList();

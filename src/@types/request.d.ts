@@ -2,7 +2,7 @@ import * as entity from "../entity";
 
 export type RequestBase = {
   entityName: entity.EntityName;
-  relations: string;
+  relations: {};
 };
 export type FindRequestOptions = RequestBase & {
   orderby: string;
