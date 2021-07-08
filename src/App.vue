@@ -1,6 +1,7 @@
 <template>
   <v-app>
-    <List />
+    <AppBar />
+    <router-view />
   </v-app>
 </template>
 
@@ -9,8 +10,6 @@ import { defineComponent } from "@vue/composition-api";
 
 export default defineComponent({
   setup() {},
-  components: {
-    List: () => import("./components/List.vue")
-  }
+  components: { AppBar: () => import("./components/AppBar.vue") }
 });
 </script>
