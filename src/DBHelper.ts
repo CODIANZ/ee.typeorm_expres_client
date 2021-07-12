@@ -1,4 +1,3 @@
-import * as entity from "./entity";
 import { FindRequestOptions, DeleteRequestOptions } from "./@types/request";
 import axios from "axios";
 

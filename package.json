@@ -26,6 +26,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.14.6",
+    "@codianz/better-date": "0.0.13",
     "@codianz/loglike": "0.0.1",
     "@codianz/rx": "0.0.1",
     "@codianz/utils": "0.0.1",

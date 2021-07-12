@@ -49,6 +49,11 @@ const items: Item[] = [
     icon: "mdi-book-open-variant",
     title: "本",
     path: "/book"
+  },
+  {
+    icon: "mdi-account-multiple-plus",
+    title: "登録",
+    path: "/signup"
   }
 ];
 

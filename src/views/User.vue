@@ -66,14 +66,13 @@ import { AxiosResponse } from "axios";
 import * as helper from "../DBHelper";
 import * as entity from "../entity";
 
-type Item = { id?: string };
 type SelecterItem = { text: string; value: number };
 
 export default defineComponent({
   setup() {
     const m = reactive({
       editedRules: {} as any,
-      editedItem: {} as Item,
+      editedItem: {} as any,
       roleSelecter: [] as SelecterItem[],
       response: undefined as AxiosResponse | undefined
     });
@@ -92,10 +91,9 @@ export default defineComponent({
     };
     const onBlur = () => {
       m.editedItem.roles = [{ id: m.editedItem.role.value }];
-      console.log("aaa");
     };
 
-    const setItem = (item: Item) => {
+    const setItem = (item: any) => {
       m.editedItem = item;
     };
     setRoleSelecter();

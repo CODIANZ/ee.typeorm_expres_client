@@ -316,18 +316,6 @@ export default defineComponent({
 
     const save = async () => {
       let data = props.editedItem;
-      // let data = {
-      //   id: 1,
-      //   firstName: "aa",
-      //   lastName: "ee",
-      //   age: 33,
-      //   roles: [
-      //     {
-      //       id: 999,
-      //       role: "Read2"
-      //     }
-      //   ]
-      // };
       const opt = { entityName: m.entity, data: data };
       m.response = await helper.updateItem(opt);
       await updateList();

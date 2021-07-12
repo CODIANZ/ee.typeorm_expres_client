@@ -6,7 +6,7 @@ Vue.use(VueRouter);
 const routes: Array<RouteConfig> = [
   {
     path: "/",
-    redirect: "/user"
+    redirect: "/signup"
   },
   {
     name: "user",
@@ -24,6 +24,12 @@ const routes: Array<RouteConfig> = [
     name: "role",
     path: "/role",
     component: () => import("../views/Role.vue"),
+    props: true
+  },
+  {
+    name: "signup",
+    path: "/signup",
+    component: () => import("../views/SignUp.vue"),
     props: true
   }
 ];
