@@ -10,35 +10,7 @@
     >
       <template v-slot:top>
         <v-toolbar flat>
-          <v-row>
-            <v-toolbar-title class="mx-4">{{ m.entity }}</v-toolbar-title>
-            <v-divider class="mx-4" inset vertical></v-divider>
-            <v-select
-              v-model="m.searchColumn"
-              :items="m.columnSelecter"
-              label="Select"
-              return-object
-              single-line
-              clearable
-            />
-            <v-text-field
-              v-model="m.inTyped"
-              label="Search"
-              single-line
-              hide-details
-              @blur="onBlur"
-            />
-            <v-select
-              v-model="m.searchType"
-              :items="m.typeSelecter"
-              label="Type"
-              return-object
-              single-line
-              clearable
-            />
-          </v-row>
           <v-spacer></v-spacer>
-
           <v-dialog v-model="m.dialog" fullscreen>
             <template v-slot:activator="{ on, attrs }">
               <v-btn color="primary" dark class="mb-2" v-bind="attrs" v-on="on">
@@ -152,29 +124,10 @@
               </ValidationObserver>
             </v-card>
           </v-dialog>
-
-          <v-dialog v-model="m.dialogDelete" max-width="500px">
-            <v-card>
-              <v-card-title class="text-h5"
-                >この操作は取り消せません<br />本当に削除しますか？</v-card-title
-              >
-              <v-card-actions>
-                <v-spacer></v-spacer>
-                <v-btn color="blue darken-1" text @click="closeDelete"
-                  >Cancel</v-btn
-                >
-                <v-btn color="blue darken-1" text @click="deleteItemConfirm"
-                  >OK</v-btn
-                >
-                <v-spacer></v-spacer>
-              </v-card-actions>
-            </v-card>
-          </v-dialog>
         </v-toolbar>
       </template>
       <template v-slot:[`item.actions`]="{ item }">
         <v-icon small class="mr-2" @click="editItem(item)"> mdi-pencil </v-icon>
-        <v-icon small @click="deleteItem(item)"> mdi-delete </v-icon>
       </template>
     </v-data-table>
 
