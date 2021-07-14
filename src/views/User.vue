@@ -1,5 +1,11 @@
 <template>
-  <List entity="User" :editedItem="m.editedItem" @setItem="setItem">
+  <List
+    entity="User"
+    :editedItem="m.editedItem"
+    :permissionRead.sync="m.permissionRead"
+    :permissionWrite.sync="m.permissionWrite"
+    @setItem="setItem"
+  >
     <template v-slot:editor>
       <v-col cols="12" sm="6" md="4">
         <ValidationProvider
@@ -60,16 +66,25 @@
 </template>
 
 <script lang="ts">
+import vue from "vue";
 import { defineComponent, reactive, watch } from "@vue/composition-api";
 import { AxiosResponse } from "axios";
 import * as helper from "../DBHelper";
 import * as listinfo from "../components/ListInfo";
+import { AccountInfo } from "@azure/msal-browser";
 
 type SelecterItem = { text: string; value: number };
 
 export default defineComponent({
+  props: {
+    account: {
+      type: Object as () => AccountInfo
+    }
+  },
   setup(props, context) {
     const m = reactive({
+      permissionRead: false,
+      permissionWrite: false,
       editedRules: {} as any,
       editedItem: {} as any,
       roleSelecter: [] as SelecterItem[],
@@ -95,6 +110,20 @@ export default defineComponent({
     const setItem = (item: any) => {
       m.editedItem = item;
     };
+    const checkpermission = () => {
+      m.permissionRead = true;
+      m.permissionWrite = true;
+    };
+
+    watch(
+      () => [props.account],
+      () => {
+        vue.nextTick(() => {
+          checkpermission();
+        });
+      }
+    );
+    checkpermission();
     setRoleSelecter();
     return { m, setItem, onBlur };
   },

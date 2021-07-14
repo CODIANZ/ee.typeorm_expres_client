@@ -164,6 +164,7 @@ import * as helper from "../DBHelper";
 import * as entity from "../entity";
 import * as listinfo from "./ListInfo";
 import { AccountInfo } from "@azure/msal-browser";
+import { AzureADPermissions } from "@/@types/azureADPermissions";
 
 type Item = { id?: string };
 type SelecterItem = { text: string; value: string };
@@ -172,6 +173,12 @@ export default defineComponent({
   props: {
     account: {
       type: Object as () => AccountInfo
+    },
+    permissionRead: {
+      type: Boolean
+    },
+    permissionWrite: {
+      type: Boolean
     },
     entity: {
       type: String as () => entity.EntityName,
@@ -188,7 +195,6 @@ export default defineComponent({
       relations: {},
       headers: undefined as listinfo.ExtendedDataTableHeader[] | undefined,
       authority: undefined as listinfo.Authority | undefined,
-      permissions: undefined as listinfo.Permission | undefined,
       items: [] as any[],
       page: 1,
       itemsLength: 0,
@@ -235,7 +241,7 @@ export default defineComponent({
         m.sortDesc = true;
         m.prevSortBy = "";
         buildHeaders();
-        checkpermission();
+        updatePermission();
       }
     };
 
@@ -250,7 +256,6 @@ export default defineComponent({
         width: 0
       });
       m.authority = listinfo.ListDescriptions[m.entity!].authorities;
-      m.permissions = listinfo.ListDescriptions[m.entity!].permissions;
       //prettier-ignore
       m.headers.forEach((x: listinfo.ExtendedDataTableHeader) => {if(x.default) m.defaultItem[x.value] = x.default;})
       context.emit("setItem", m.defaultItem);
@@ -335,24 +340,10 @@ export default defineComponent({
       close();
     };
 
-    const checkpermission = () => {
-      const idToken: any = m.account!.idTokenClaims;
-      if (m.permissions?.open == true) {
-        m.permissionRead = true;
-        m.permissionWrite = true;
-      } else {
-        m.permissionRead = idToken[m.permissions?.read!];
-        m.permissionWrite = idToken[m.permissions?.write!];
-      }
+    const updatePermission = () => {
+      m.permissionRead = props.permissionRead;
+      m.permissionWrite = props.permissionWrite;
     };
-
-    watch(
-      () => props.account,
-      () => {
-        m.account = props.account;
-        checkpermission();
-      }
-    );
 
     watch(
       () => [m.searchColumn, m.searchText, m.searchType],
@@ -388,7 +379,6 @@ export default defineComponent({
 
     // init
     updateEntity(props.entity!);
-    checkpermission();
     updateList();
 
     return {

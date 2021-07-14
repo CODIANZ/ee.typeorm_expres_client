@@ -8,7 +8,7 @@
     <v-navigation-drawer v-model="m.drawer" app>
       <v-list nav dense>
         <v-list-item
-          v-for="item in items"
+          v-for="item in m.items"
           :key="item.model"
           @click="onItemClick(item)"
         >
@@ -23,11 +23,19 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, onUnmounted, reactive } from "@vue/composition-api";
+import vue from "vue";
+import {
+  defineComponent,
+  onUnmounted,
+  reactive,
+  watch
+} from "@vue/composition-api";
 import { Application } from "../AzureClientAuth";
 import router from "@/router";
 import * as rx from "@codianz/rx";
 import * as loglike from "@codianz/loglike";
+import { AccountInfo } from "@azure/msal-browser";
+import { AzureADPermissions } from "@/@types/azureADPermissions";
 const log = loglike.Null;
 type Item = {
   icon: string;
@@ -35,37 +43,18 @@ type Item = {
   path: string;
 };
 
-const items: Item[] = [
-  {
-    icon: "mdi-account",
-    title: "ユーザー",
-    path: "/user"
-  },
-  {
-    icon: "mdi-account-check",
-    title: "権限",
-    path: "/role"
-  },
-  {
-    icon: "mdi-book-open-variant",
-    title: "本",
-    path: "/book"
-  },
-  {
-    icon: "mdi-account-multiple-plus",
-    title: "登録",
-    path: "/signup"
-  },
-  {
-    icon: "mdi-logout",
-    title: "ログアウト",
-    path: "/signout"
-  }
-];
-
 export default defineComponent({
+  props: {
+    account: {
+      type: Object as () => AccountInfo
+    },
+    permissions: {
+      type: Object as () => AzureADPermissions
+    }
+  },
   setup(props, context) {
     const m = reactive({
+      items: [] as Item[],
       drawer: false,
       title: "ユーザー",
       dateTime: "",
@@ -76,10 +65,52 @@ export default defineComponent({
     onUnmounted(() => {
       sg.unsubscribeAll();
     });
+    m.items = [
+      {
+        icon: "mdi-account",
+        title: "ユーザー",
+        path: "/user"
+      },
+      {
+        icon: "mdi-account-check",
+        title: "権限",
+        path: "/role"
+      }
+    ];
+
+    const updateItems = () => {
+      if (props.permissions!.ReadBook) {
+        m.items.push({
+          icon: "mdi-book-open-variant",
+          title: "本",
+          path: "/book"
+        });
+      }
+      if (props.permissions!.ReadAccount) {
+        m.items.push({
+          icon: "mdi-account-multiple-plus",
+          title: "登録",
+          path: "/signup"
+        });
+      }
+      m.items.push({
+        icon: "mdi-logout",
+        title: "ログアウト",
+        path: "/signout"
+      });
+    };
+
+    watch(
+      () => [props.permissions, props.account],
+      () => {
+        vue.nextTick(() => {
+          updateItems();
+        });
+      }
+    );
 
     return {
       m,
-      items,
       onItemClick(item: Item) {
         if (item.path == "/signout") {
           Application.Instance.Auth.signOut();

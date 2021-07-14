@@ -2,15 +2,17 @@
   <v-container fluid>
     <v-spacer class="mt-16"></v-spacer>
     <v-data-table
+      v-if="m.permissionRead"
       :entity="m.entity"
       :headers="m.headers"
       :items="m.items"
+      :loading="m.isLoad"
       class="elevation-1"
     >
       <template v-slot:top>
         <v-toolbar flat>
           <v-spacer></v-spacer>
-          <v-dialog v-model="m.dialog" fullscreen>
+          <v-dialog v-model="m.dialog" fullscreen v-if="m.permissionWrite">
             <template v-slot:activator="{ on, attrs }">
               <v-btn color="primary" dark class="mb-2" v-bind="attrs" v-on="on">
                 New Item
@@ -72,15 +74,7 @@
                       表示名：{{ m.editedItem.displayName }}
                     </v-col>
                   </v-row>
-                  <v-row v-if="m.editedIndex == -1">
-                    <v-col cols="12" sm="6">
-                      <v-checkbox
-                        v-model="m.fullAccess"
-                        label="fullAccess"
-                      ></v-checkbox>
-                    </v-col>
-                  </v-row>
-                  <v-container v-if="!m.fullAccess">
+                  <v-container>
                     <v-checkbox
                       v-model="
                         m.editedItem
@@ -131,21 +125,14 @@
           </v-dialog>
         </v-toolbar>
       </template>
-      <template v-slot:[`item.actions`]="{ item }">
+      <template v-if="m.permissionWrite" v-slot:[`item.actions`]="{ item }">
         <v-icon small class="mr-2" @click="editItem(item)"> mdi-pencil </v-icon>
       </template>
     </v-data-table>
-
-    <v-btn @click="onClickgetToken"> getToken </v-btn>
     <div v-if="m.response">
       <span>
         account:
         {{ m.account }}
-      </span>
-      <hr />
-      <span>
-        createUser:
-        {{ m.account.idTokenClaims.extension_CreateUser }}
       </span>
       <hr />
     </div>
@@ -156,9 +143,10 @@
 import vue from "vue";
 import { readWritePerm, signUpDataPerm } from "../@types/request";
 import { defineComponent, reactive, watch } from "@vue/composition-api";
-import { signUp, getToken, getList, update } from "../SignUpHelper";
+import { signUp, getList, update } from "../SignUpHelper";
 import { AxiosResponse } from "axios";
 import { DataTableHeader } from "vuetify";
+import { AzureADPermissions } from "@/@types/azureADPermissions";
 import { AccountInfo } from "@azure/msal-common";
 
 export const extensionAttributes = {
@@ -171,11 +159,14 @@ export default defineComponent({
   props: {
     account: {
       type: Object as () => AccountInfo
+    },
+    permissions: {
+      type: Object as () => AzureADPermissions
     }
   },
   setup(props, context) {
     const m = reactive({
-      account: undefined as AccountInfo | undefined,
+      permissions: {} as AzureADPermissions,
       permissionRead: false,
       permissionWrite: false,
       headers: undefined as DataTableHeader[] | undefined,
@@ -253,25 +244,17 @@ export default defineComponent({
         // create
         m.mailNickname = m.firstName + m.lastName.charAt(0).toUpperCase();
         let readWrite: readWritePerm;
-        if (m.fullAccess) {
-          readWrite = {
-            [extensionAttributes.ReadBook]: true,
-            [extensionAttributes.ReadAccount]: true,
-            [extensionAttributes.WriteBook]: true,
-            [extensionAttributes.WriteAccount]: true
-          };
-        } else {
-          readWrite = {
-            [extensionAttributes.ReadBook]:
-              m.editedItem[extensionAttributes.ReadBook],
-            [extensionAttributes.ReadAccount]:
-              m.editedItem[extensionAttributes.ReadAccount],
-            [extensionAttributes.WriteBook]:
-              m.editedItem[extensionAttributes.WriteBook],
-            [extensionAttributes.WriteAccount]:
-              m.editedItem[extensionAttributes.WriteAccount]
-          };
-        }
+        readWrite = {
+          [extensionAttributes.ReadBook]:
+            m.editedItem[extensionAttributes.ReadBook],
+          [extensionAttributes.ReadAccount]:
+            m.editedItem[extensionAttributes.ReadAccount],
+          [extensionAttributes.WriteBook]:
+            m.editedItem[extensionAttributes.WriteBook],
+          [extensionAttributes.WriteAccount]:
+            m.editedItem[extensionAttributes.WriteAccount]
+        };
+
         const data: signUpDataPerm = {
           accountEnabled: true,
           displayName: `${m.lastName} ${m.firstName}`,
@@ -306,33 +289,26 @@ export default defineComponent({
       updateList();
     };
 
-    const onClickgetToken = () => {
-      getToken();
-    };
-
     const checkpermission = () => {
-      vue.nextTick(() => {
-        const idToken: any = m.account!.idTokenClaims;
-        m.permissionRead = idToken!.extension_ReadAccount;
-        m.permissionWrite = idToken!.extension_WriteAccount;
-      });
+      m.permissions = props.permissions!;
+      m.permissionRead = m.permissions.ReadAccount;
+      m.permissionWrite = m.permissions.WriteAccount;
     };
 
     watch(
-      () => props.account,
+      () => [props.permissions, props.account],
       () => {
-        m.account = props.account;
-        checkpermission();
+        vue.nextTick(() => {
+          checkpermission();
+          updateList();
+        });
       }
     );
-
-    // init
     checkpermission();
     updateList();
     return {
       m,
       save,
-      onClickgetToken,
       editItem,
       close
     };

@@ -28,7 +28,6 @@ export interface Permission {
 export type ListDescription<T extends entity.EntityName> = {
   relations: {};
   authorities: Authority;
-  permissions: Permission;
   headers: () => ExtendedDataTableHeader<entity.EntityMap[T]>[];
 };
 export const ListDescriptions: {
@@ -37,7 +36,6 @@ export const ListDescriptions: {
   User: {
     relations: { role: "roles" },
     authorities: { creatable: true, editable: true, deletable: true },
-    permissions: { open: true },
     headers: () => [
       { text: "id", sortable: true, value: "id" },
       {
@@ -71,7 +69,6 @@ export const ListDescriptions: {
   },
   Role: {
     relations: "",
-    permissions: { open: true },
     authorities: { creatable: true, editable: false, deletable: false },
     headers: () => [
       { text: "id", sortable: true, value: "id" },
@@ -85,7 +82,6 @@ export const ListDescriptions: {
   },
   Book: {
     relations: "",
-    permissions: { read: "extension_ReadBook", write: "extension_WriteBook" },
     authorities: { creatable: true, editable: true, deletable: true },
     headers: () => [
       { text: "id", sortable: true, value: "id" },

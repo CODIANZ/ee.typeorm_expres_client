@@ -1,5 +1,11 @@
 <template>
-  <List entity="Book" :editedItem="m.editedItem" @setItem="setItem">
+  <List
+    entity="Book"
+    :editedItem="m.editedItem"
+    :permissionRead.sync="m.permissionRead"
+    :permissionWrite.sync="m.permissionWrite"
+    @setItem="setItem"
+  >
     <template v-slot:editor>
       <v-col cols="12" sm="6" md="4">
         <ValidationProvider
@@ -42,16 +48,30 @@
 </template>
 
 <script lang="ts">
+import vue from "vue";
+import { AzureADPermissions } from "@/@types/azureADPermissions";
+import { AccountInfo } from "@azure/msal-browser";
 import { defineComponent, reactive, watch } from "@vue/composition-api";
 import * as listinfo from "../components/ListInfo";
 
 type Item = { id?: string; publish_at: string };
 
 export default defineComponent({
+  props: {
+    account: {
+      type: Object as () => AccountInfo
+    },
+    permissions: {
+      type: Object as () => AzureADPermissions
+    }
+  },
   setup(props, context) {
     const m = reactive({
       editedRules: {} as any,
-      editedItem: {} as Item
+      editedItem: {} as Item,
+      permissionRead: false,
+      permissionWrite: false,
+      permissions: {} as AzureADPermissions
     });
     listinfo.ListDescriptions["Book"]
       .headers()
@@ -60,8 +80,23 @@ export default defineComponent({
       });
     const setItem = (item: Item) => {
       m.editedItem = item;
-      m.editedItem.publish_at! = m.editedItem.publish_at.substr(0, 10);
     };
+
+    const checkpermission = () => {
+      m.permissions = props.permissions!;
+      m.permissionRead = m.permissions.ReadBook;
+      m.permissionWrite = m.permissions.WriteBook;
+    };
+
+    watch(
+      () => [props.permissions, props.account],
+      () => {
+        vue.nextTick(() => {
+          checkpermission();
+        });
+      }
+    );
+    checkpermission();
     return { m, setItem };
   },
   components: {
