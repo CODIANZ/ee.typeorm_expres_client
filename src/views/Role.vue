@@ -20,21 +20,29 @@
 </template>
 
 <script lang="ts">
+import { AccountInfo } from "@azure/msal-browser";
 import { defineComponent, reactive } from "@vue/composition-api";
-import * as entity from "../entity";
+import * as listinfo from "../components/ListInfo";
 
 type Item = { id?: string };
 
 export default defineComponent({
-  setup() {
+  props: {
+    account: {
+      type: Object as () => AccountInfo
+    }
+  },
+  setup(props, context) {
     const m = reactive({
+      account: undefined as AccountInfo | undefined,
+      permission: false,
       editableColumn: [] as string[],
       editedRules: {} as any,
       editedItem: {} as Item
     });
-    entity.ListDescriptions["Role"]
+    listinfo.ListDescriptions["Role"]
       .headers()
-      .forEach((x: entity.ExtendedDataTableHeader) => {
+      .forEach((x: listinfo.ExtendedDataTableHeader) => {
         if (x.rules) m.editedRules[x.value] = x.rules;
       });
     const setItem = (item: Item) => {

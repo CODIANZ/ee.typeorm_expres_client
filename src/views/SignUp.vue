@@ -5,7 +5,6 @@
       :entity="m.entity"
       :headers="m.headers"
       :items="m.items"
-      :loading="m.isLoad"
       class="elevation-1"
     >
       <template v-slot:top>
@@ -52,22 +51,28 @@
                         ></v-text-field>
                       </ValidationProvider>
                     </v-col>
+                    <v-col cols="12" sm="6">
+                      <ValidationProvider
+                        v-slot="{ errors }"
+                        name="email"
+                        :rules="m.editedRules.email"
+                      >
+                        <v-text-field
+                          v-model="m.mailAddress"
+                          color="blue darken-2"
+                          label="メールアドレス"
+                          :error-messages="errors"
+                          required
+                        ></v-text-field>
+                      </ValidationProvider>
+                    </v-col>
                   </v-row>
                   <v-row v-if="m.editedIndex != -1">
                     <v-col cols="12" sm="6">
                       表示名：{{ m.editedItem.displayName }}
                     </v-col>
                   </v-row>
-                  <v-row>
-                    <v-col cols="12" sm="6">
-                      <v-checkbox
-                        v-model="
-                          m.editedItem
-                            .extension_d682a04f5b2c4876914713579fdf1e26_CreateUser
-                        "
-                        label="createUser"
-                      ></v-checkbox>
-                    </v-col>
+                  <v-row v-if="m.editedIndex == -1">
                     <v-col cols="12" sm="6">
                       <v-checkbox
                         v-model="m.fullAccess"
@@ -79,30 +84,30 @@
                     <v-checkbox
                       v-model="
                         m.editedItem
-                          .extension_d682a04f5b2c4876914713579fdf1e26_readBook
+                          .extension_d682a04f5b2c4876914713579fdf1e26_ReadBook
                       "
                       label="readBook"
                     ></v-checkbox>
                     <v-checkbox
                       v-model="
                         m.editedItem
-                          .extension_d682a04f5b2c4876914713579fdf1e26_writeBook
+                          .extension_d682a04f5b2c4876914713579fdf1e26_WriteBook
                       "
                       label="writeBook"
                     ></v-checkbox>
                     <v-checkbox
                       v-model="
                         m.editedItem
-                          .extension_d682a04f5b2c4876914713579fdf1e26_readUser
+                          .extension_d682a04f5b2c4876914713579fdf1e26_ReadAccount
                       "
-                      label="readUser"
+                      label="readAccount"
                     ></v-checkbox>
                     <v-checkbox
                       v-model="
                         m.editedItem
-                          .extension_d682a04f5b2c4876914713579fdf1e26_writeUser
+                          .extension_d682a04f5b2c4876914713579fdf1e26_WriteAccount
                       "
-                      label="writeUser"
+                      label="writeAccount"
                     ></v-checkbox>
                   </v-container>
                 </v-card-text>
@@ -134,33 +139,45 @@
     <v-btn @click="onClickgetToken"> getToken </v-btn>
     <div v-if="m.response">
       <span>
-        レスポンス全文：
-        {{ m.response }}
+        account:
+        {{ m.account }}
       </span>
       <hr />
       <span>
-        リクエストクエリー：
-        {{ m.editedItem }}
+        createUser:
+        {{ m.account.idTokenClaims.extension_CreateUser }}
       </span>
       <hr />
-      <span>
-        レスポンスデータ：
-        {{ m.response.data }}
-      </span>
     </div>
   </v-container>
 </template>
 
 <script lang="ts">
+import vue from "vue";
 import { readWritePerm, signUpDataPerm } from "../@types/request";
-import { defineComponent, reactive } from "@vue/composition-api";
+import { defineComponent, reactive, watch } from "@vue/composition-api";
 import { signUp, getToken, getList, update } from "../SignUpHelper";
 import { AxiosResponse } from "axios";
 import { DataTableHeader } from "vuetify";
+import { AccountInfo } from "@azure/msal-common";
 
+export const extensionAttributes = {
+  ReadBook: "extension_d682a04f5b2c4876914713579fdf1e26_ReadBook",
+  ReadAccount: "extension_d682a04f5b2c4876914713579fdf1e26_ReadAccount",
+  WriteBook: "extension_d682a04f5b2c4876914713579fdf1e26_WriteBook",
+  WriteAccount: "extension_d682a04f5b2c4876914713579fdf1e26_WriteAccount"
+};
 export default defineComponent({
+  props: {
+    account: {
+      type: Object as () => AccountInfo
+    }
+  },
   setup(props, context) {
     const m = reactive({
+      account: undefined as AccountInfo | undefined,
+      permissionRead: false,
+      permissionWrite: false,
       headers: undefined as DataTableHeader[] | undefined,
       items: [] as any[],
       response: undefined as AxiosResponse | undefined,
@@ -172,41 +189,36 @@ export default defineComponent({
       defaultItem: {} as any,
       firstName: "",
       lastName: "",
+      mailAddress: "",
       mailNickname: "",
       createUser: false,
       fullAccess: false,
-      readBook: false,
-      writeBook: false,
-      readUser: false,
-      writeUser: false,
-      editedRules: { firstName: "alpha|required", lastName: "alpha|required" }
+      editedRules: {
+        firstName: "alpha|required",
+        lastName: "alpha|required",
+        mailAddress: "email|required"
+      }
     });
-
     m.headers = [
       { text: "表示名", value: "displayName", sortable: true },
       {
-        text: "createUser",
-        value: "extension_d682a04f5b2c4876914713579fdf1e26_CreateUser",
-        sortable: true
-      },
-      {
         text: "readBook",
-        value: "extension_d682a04f5b2c4876914713579fdf1e26_ReadBook",
+        value: extensionAttributes.ReadBook,
         sortable: true
       },
       {
         text: "writeBook",
-        value: "extension_d682a04f5b2c4876914713579fdf1e26_ReadUser",
+        value: extensionAttributes.WriteBook,
         sortable: true
       },
       {
-        text: "readUser",
-        value: "extension_d682a04f5b2c4876914713579fdf1e26_WriteBook",
+        text: "readAccount",
+        value: extensionAttributes.ReadAccount,
         sortable: true
       },
       {
-        text: "WriteUser",
-        value: "extension_d682a04f5b2c4876914713579fdf1e26_WriteUser",
+        text: "WriteAccount",
+        value: extensionAttributes.WriteAccount,
         sortable: true
       },
       {
@@ -243,43 +255,50 @@ export default defineComponent({
         let readWrite: readWritePerm;
         if (m.fullAccess) {
           readWrite = {
-            extension_d682a04f5b2c4876914713579fdf1e26_ReadBook: true,
-            extension_d682a04f5b2c4876914713579fdf1e26_ReadUser: true,
-            extension_d682a04f5b2c4876914713579fdf1e26_WriteBook: true,
-            extension_d682a04f5b2c4876914713579fdf1e26_WriteUser: true
+            [extensionAttributes.ReadBook]: true,
+            [extensionAttributes.ReadAccount]: true,
+            [extensionAttributes.WriteBook]: true,
+            [extensionAttributes.WriteAccount]: true
           };
         } else {
           readWrite = {
-            extension_d682a04f5b2c4876914713579fdf1e26_ReadBook: m.readBook,
-            extension_d682a04f5b2c4876914713579fdf1e26_ReadUser: m.readUser,
-            extension_d682a04f5b2c4876914713579fdf1e26_WriteBook: m.writeBook,
-            extension_d682a04f5b2c4876914713579fdf1e26_WriteUser: m.writeUser
+            [extensionAttributes.ReadBook]:
+              m.editedItem[extensionAttributes.ReadBook],
+            [extensionAttributes.ReadAccount]:
+              m.editedItem[extensionAttributes.ReadAccount],
+            [extensionAttributes.WriteBook]:
+              m.editedItem[extensionAttributes.WriteBook],
+            [extensionAttributes.WriteAccount]:
+              m.editedItem[extensionAttributes.WriteAccount]
           };
         }
         const data: signUpDataPerm = {
           accountEnabled: true,
           displayName: `${m.lastName} ${m.firstName}`,
           mailNickname: m.mailNickname,
-          userPrincipalName: `${m.lastName}_${m.firstName}#EXT#@codianzeval.onmicrosoft.com`,
+          mail: m.mailAddress,
+          userPrincipalName: `${m.mailAddress.replace(
+            "@",
+            "_"
+          )}#EXT#@codianzeval.onmicrosoft.com`,
           passwordProfile: {
-            forceChangePasswordNextSignIn: true,
-            password: "xWwvJ]6NMw+bWH-d"
+            forceChangePasswordNextSignIn: false,
+            password: "Testpass01"
           },
-          extension_d682a04f5b2c4876914713579fdf1e26_createUser: m.createUser,
           ...readWrite
         };
         m.response = await signUp(data);
       } else {
         // update
         const data: readWritePerm = {
-          extension_d682a04f5b2c4876914713579fdf1e26_ReadBook:
-            m.editedItem.extension_d682a04f5b2c4876914713579fdf1e26_readBook,
-          extension_d682a04f5b2c4876914713579fdf1e26_ReadUser:
-            m.editedItem.extension_d682a04f5b2c4876914713579fdf1e26_readUser,
-          extension_d682a04f5b2c4876914713579fdf1e26_WriteBook:
-            m.editedItem.extension_d682a04f5b2c4876914713579fdf1e26_writeBook,
-          extension_d682a04f5b2c4876914713579fdf1e26_WriteUser:
-            m.editedItem.extension_d682a04f5b2c4876914713579fdf1e26_writeUser
+          [extensionAttributes.ReadBook]:
+            m.editedItem[extensionAttributes.ReadBook],
+          [extensionAttributes.ReadAccount]:
+            m.editedItem[extensionAttributes.ReadAccount],
+          [extensionAttributes.WriteBook]:
+            m.editedItem[extensionAttributes.WriteBook],
+          [extensionAttributes.WriteAccount]:
+            m.editedItem[extensionAttributes.WriteAccount]
         };
         m.response = await update(data, m.editedItem.id);
       }
@@ -291,6 +310,24 @@ export default defineComponent({
       getToken();
     };
 
+    const checkpermission = () => {
+      vue.nextTick(() => {
+        const idToken: any = m.account!.idTokenClaims;
+        m.permissionRead = idToken!.extension_ReadAccount;
+        m.permissionWrite = idToken!.extension_WriteAccount;
+      });
+    };
+
+    watch(
+      () => props.account,
+      () => {
+        m.account = props.account;
+        checkpermission();
+      }
+    );
+
+    // init
+    checkpermission();
     updateList();
     return {
       m,

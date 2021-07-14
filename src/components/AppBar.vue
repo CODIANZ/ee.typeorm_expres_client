@@ -24,6 +24,7 @@
 
 <script lang="ts">
 import { defineComponent, onUnmounted, reactive } from "@vue/composition-api";
+import { Application } from "../AzureClientAuth";
 import router from "@/router";
 import * as rx from "@codianz/rx";
 import * as loglike from "@codianz/loglike";
@@ -54,11 +55,16 @@ const items: Item[] = [
     icon: "mdi-account-multiple-plus",
     title: "登録",
     path: "/signup"
+  },
+  {
+    icon: "mdi-logout",
+    title: "ログアウト",
+    path: "/signout"
   }
 ];
 
 export default defineComponent({
-  setup() {
+  setup(props, context) {
     const m = reactive({
       drawer: false,
       title: "ユーザー",
@@ -75,10 +81,15 @@ export default defineComponent({
       m,
       items,
       onItemClick(item: Item) {
-        m.title = item.title;
-        m.path = item.path;
-        m.drawer = false;
-        if (router.currentRoute.path != item.path) router.replace(item.path);
+        if (item.path == "/signout") {
+          Application.Instance.Auth.signOut();
+          context.emit("signOut");
+        } else {
+          m.title = item.title;
+          m.path = item.path;
+          m.drawer = false;
+          if (router.currentRoute.path != item.path) router.replace(item.path);
+        }
       }
     };
   }

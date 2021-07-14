@@ -42,27 +42,26 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, reactive } from "@vue/composition-api";
-import * as entity from "../entity";
+import { defineComponent, reactive, watch } from "@vue/composition-api";
+import * as listinfo from "../components/ListInfo";
 
 type Item = { id?: string; publish_at: string };
 
 export default defineComponent({
-  setup() {
+  setup(props, context) {
     const m = reactive({
       editedRules: {} as any,
       editedItem: {} as Item
     });
-    entity.ListDescriptions["Book"]
+    listinfo.ListDescriptions["Book"]
       .headers()
-      .forEach((x: entity.ExtendedDataTableHeader) => {
+      .forEach((x: listinfo.ExtendedDataTableHeader) => {
         if (x.rules) m.editedRules[x.value] = x.rules;
       });
     const setItem = (item: Item) => {
       m.editedItem = item;
       m.editedItem.publish_at! = m.editedItem.publish_at.substr(0, 10);
     };
-
     return { m, setItem };
   },
   components: {

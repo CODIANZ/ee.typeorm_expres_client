@@ -60,25 +60,24 @@
 </template>
 
 <script lang="ts">
-import { FindRequestOptions } from "@/@types/request";
-import { defineComponent, reactive } from "@vue/composition-api";
+import { defineComponent, reactive, watch } from "@vue/composition-api";
 import { AxiosResponse } from "axios";
 import * as helper from "../DBHelper";
-import * as entity from "../entity";
+import * as listinfo from "../components/ListInfo";
 
 type SelecterItem = { text: string; value: number };
 
 export default defineComponent({
-  setup() {
+  setup(props, context) {
     const m = reactive({
       editedRules: {} as any,
       editedItem: {} as any,
       roleSelecter: [] as SelecterItem[],
       response: undefined as AxiosResponse | undefined
     });
-    entity.ListDescriptions["User"]
+    listinfo.ListDescriptions["User"]
       .headers()
-      .forEach((x: entity.ExtendedDataTableHeader) => {
+      .forEach((x: listinfo.ExtendedDataTableHeader) => {
         if (x.rules) m.editedRules[x.value] = x.rules;
       });
     const setRoleSelecter = async () => {

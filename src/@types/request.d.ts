@@ -1,5 +1,5 @@
 import * as entity from "../entity";
-
+import { extensionAttributes } from "../views/SignUp.vue";
 export type RequestBase = {
   entityName: entity.EntityName;
   relations?: {};
@@ -23,18 +23,16 @@ export type SignUpDataBase = {
   displayName: string;
   mailNickname: string;
   userPrincipalName: string;
+  mail: string;
   passwordProfile: {
     forceChangePasswordNextSignIn: boolean;
     password: string;
   };
 };
 export type readWritePerm = {
-  extension_d682a04f5b2c4876914713579fdf1e26_ReadBook: boolean;
-  extension_d682a04f5b2c4876914713579fdf1e26_ReadUser: boolean;
-  extension_d682a04f5b2c4876914713579fdf1e26_WriteBook: boolean;
-  extension_d682a04f5b2c4876914713579fdf1e26_WriteUser: boolean;
+  [extensionAttributes.ReadBook]: boolean;
+  [extensionAttributes.ReadAccount]: boolean;
+  [extensionAttributes.WriteBook]: boolean;
+  [extensionAttributes.WriteAccount]: boolean;
 };
-export type signUpDataPerm = SignUpDataBase &
-  readWritePerm & {
-    extension_d682a04f5b2c4876914713579fdf1e26_createUser: boolean;
-  };
+export type signUpDataPerm = SignUpDataBase & readWritePerm;

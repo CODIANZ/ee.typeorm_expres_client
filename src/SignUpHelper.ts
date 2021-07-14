@@ -2,48 +2,46 @@ import axios from "axios";
 import { readWritePerm, signUpDataPerm } from "./@types/request";
 import { BDate } from "@codianz/better-date";
 
-// type Token = {
-//   token_type: "Bearer";
-//   expires_in: number;
-//   ext_expires_in: number;
-//   access_token: string;
-//   expires_at?: BDate;
-// };
+type Token = {
+  token_type: string;
+  expires_in: number;
+  ext_expires_in?: number;
+  access_token: string;
+  expires_at?: BDate;
+};
 const getTokenUrl = "http://localhost:7081/api/GraphApiToken";
 
-let token: any;
+let Defaulttoken: Token;
 export const getToken = async () => {
-  await axios
-    .get(getTokenUrl)
-    .then((res) => {
-      token = res.data;
-    })
-    .catch((err) => {
-      console.log(err);
-    });
+  let token;
+  const now = new BDate(Date.now());
+  if (!Defaulttoken || Defaulttoken.expires_at!.time < now.time) {
+    await axios
+      .get(getTokenUrl)
+      .then((res) => {
+        Defaulttoken = res.data;
+        Defaulttoken.expires_at = new BDate(Date.now()).addSeconds(
+          Defaulttoken.expires_in - 1000
+        );
+        token = Defaulttoken.access_token;
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  } else {
+    token = Defaulttoken.access_token;
+  }
+  return token;
 };
 
 export const signUp = async (data: signUpDataPerm) => {
   let res;
-  let config;
-  const now = new BDate(Date.now());
-  if (!token || token.expires_at! < now) {
-    await getToken().then(() => {
-      config = {
-        headers: {
-          "Content-Type": "application/JSON",
-          Authorization: `Bearer ${token.access_token}`
-        }
-      };
-    });
-  } else {
-    config = {
-      headers: {
-        "Content-Type": "application/JSON",
-        Authorization: `Bearer ${token.access_token}`
-      }
-    };
-  }
+  const config = {
+    headers: {
+      "Content-Type": "application/JSON",
+      Authorization: `Bearer ${await getToken()}`
+    }
+  };
   await axios
     .post("https://graph.microsoft.com/v1.0/users", data, config)
     .then((response) => {
@@ -57,26 +55,12 @@ export const signUp = async (data: signUpDataPerm) => {
 
 export const update = async (data: readWritePerm, id: string) => {
   let res;
-  let config;
-  const now = new BDate(Date.now());
-  if (!token || token.expires_at! < now) {
-    await getToken().then(() => {
-      config = {
-        headers: {
-          "Content-Type": "application/JSON",
-          Authorization: `Bearer ${token.access_token}`
-        }
-      };
-    });
-  } else {
-    config = {
-      headers: {
-        "Content-Type": "application/JSON",
-        Authorization: `Bearer ${token.access_token}`
-      }
-    };
-  }
-
+  const config = {
+    headers: {
+      "Content-Type": "application/JSON",
+      Authorization: `Bearer ${await getToken()}`
+    }
+  };
   await axios
     .patch(`https://graph.microsoft.com/v1.0/users/${id}`, data, config)
     .then((response) => {
@@ -90,23 +74,11 @@ export const update = async (data: readWritePerm, id: string) => {
 
 export const getList = async () => {
   let res;
-  let config;
-  const now = new BDate(Date.now());
-  if (!token || token.expires_at! < now) {
-    await getToken().then(() => {
-      config = {
-        headers: {
-          Authorization: `Bearer ${token.access_token}`
-        }
-      };
-    });
-  } else {
-    config = {
-      headers: {
-        Authorization: `Bearer ${token.access_token}`
-      }
-    };
-  }
+  const config = {
+    headers: {
+      Authorization: `Bearer ${await getToken()}`
+    }
+  };
   await axios
     .get("https://graph.microsoft.com/beta/users", config)
     .then((response) => {
