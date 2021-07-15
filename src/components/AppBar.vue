@@ -30,7 +30,7 @@ import {
   reactive,
   watch
 } from "@vue/composition-api";
-import { Application } from "../AzureClientAuth";
+import { Application } from "../Application";
 import router from "@/router";
 import * as rx from "@codianz/rx";
 import * as loglike from "@codianz/loglike";

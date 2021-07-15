@@ -8,7 +8,7 @@
 <script lang="ts">
 import { AccountInfo } from "@azure/msal-browser";
 import { defineComponent, reactive, watch } from "@vue/composition-api";
-import { Application } from "./AzureClientAuth";
+import { Application } from "./Application";
 import { AzureADPermissions } from "./@types/azureADPermissions";
 
 export default defineComponent({
