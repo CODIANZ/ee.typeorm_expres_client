@@ -18,9 +18,10 @@
       <template v-slot:top>
         <v-toolbar flat>
           <v-row>
-            <v-toolbar-title class="mx-4">{{ m.entity }}</v-toolbar-title>
+            <v-toolbar-title class="mx-4 mt-4">{{ m.entity }}</v-toolbar-title>
             <v-divider class="mx-4" inset vertical></v-divider>
             <v-select
+              class="ml-6 mt-4"
               v-model="m.searchColumn"
               :items="m.columnSelecter"
               label="Select"
@@ -29,13 +30,16 @@
               clearable
             />
             <v-text-field
+              class="mt-4"
               v-model="m.inTyped"
               label="Search"
               single-line
               hide-details
               @blur="onBlur"
+              clearable
             />
             <v-select
+              class="mt-4"
               v-model="m.searchType"
               :items="m.typeSelecter"
               label="Type"
@@ -45,11 +49,10 @@
             />
           </v-row>
           <v-spacer></v-spacer>
-
           <v-dialog v-model="m.dialog" fullscreen>
             <template v-slot:activator="{ on, attrs }">
               <v-btn
-                v-if="m.authority.creatable"
+                v-if="m.authority.creatable && m.permissionWrite"
                 color="primary"
                 dark
                 class="mb-2"
@@ -60,36 +63,36 @@
               </v-btn>
             </template>
             <v-card>
-              <ValidationObserver v-slot="{ invalid }">
-                <v-card-title>
-                  <span class="text-h5">{{ formTitle }}</span>
-                </v-card-title>
-                <v-card-text>
-                  <v-container>
+              <v-container>
+                <v-spacer class="mt-10"></v-spacer>
+                <ValidationObserver v-slot="{ invalid }">
+                  <v-card-title>
+                    <span class="text-h5">{{ formTitle }}</span>
+                  </v-card-title>
+                  <v-card-text>
                     <v-row>
                       <slot name="editor" />
                     </v-row>
-                  </v-container>
-                </v-card-text>
-                <v-card-actions>
-                  <v-spacer></v-spacer>
-                  <v-btn color="blue darken-1" text @click="close">
-                    Cancel
-                  </v-btn>
-                  <v-btn
-                    color="blue darken-1"
-                    text
-                    @click="save"
-                    type="submit"
-                    :disabled="invalid"
-                  >
-                    Save
-                  </v-btn>
-                </v-card-actions>
-              </ValidationObserver>
+                  </v-card-text>
+                  <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn color="blue darken-1" text @click="close">
+                      Cancel
+                    </v-btn>
+                    <v-btn
+                      color="blue darken-1"
+                      text
+                      @click="save"
+                      type="submit"
+                      :disabled="invalid"
+                    >
+                      Save
+                    </v-btn>
+                  </v-card-actions>
+                </ValidationObserver>
+              </v-container>
             </v-card>
           </v-dialog>
-
           <v-dialog v-model="m.dialogDelete" max-width="500px">
             <v-card>
               <v-card-title class="text-h5"
@@ -111,40 +114,23 @@
       </template>
       <template v-slot:[`item.actions`]="{ item }">
         <v-icon
-          v-if="m.authority.editable"
+          v-if="m.authority.editable && m.permissionWrite"
           small
           class="mr-2"
           @click="editItem(item)"
         >
           mdi-pencil
         </v-icon>
-        <v-icon v-if="m.authority.deletable" small @click="deleteItem(item)">
+        <v-icon
+          v-if="m.authority.deletable && m.permissionWrite"
+          small
+          @click="deleteItem(item)"
+        >
           mdi-delete
         </v-icon>
       </template>
     </v-data-table>
     <hr />
-    <div v-if="m.response">
-      <span>
-        レスポンス全文：
-        {{ m.response }}
-      </span>
-      <hr />
-      <span>
-        リクエストクエリー：
-        {{ m.response.config.params }}
-      </span>
-      <hr />
-      <span>
-        レスポンスデータ：
-        {{ m.response.data }}
-      </span>
-      <hr />
-      <span>
-        debug：
-        {{ m.headers }}
-      </span>
-    </div>
   </v-container>
 </template>
 
@@ -154,18 +140,30 @@ import {
   defineComponent,
   reactive,
   watch,
-  computed
+  computed,
+  onMounted
 } from "@vue/composition-api";
 import { AxiosResponse } from "axios";
 import { FindRequestOptions, DeleteRequestOptions } from "../@types/request";
 import * as helper from "../DBHelper";
 import * as entity from "../entity";
+import * as listinfo from "./ListInfo";
+import { AccountInfo } from "@azure/msal-browser";
 
 type Item = { id?: string };
 type SelecterItem = { text: string; value: string };
 
 export default defineComponent({
   props: {
+    account: {
+      type: Object as () => AccountInfo
+    },
+    permissionRead: {
+      type: Boolean
+    },
+    permissionWrite: {
+      type: Boolean
+    },
     entity: {
       type: String as () => entity.EntityName,
       required: true
@@ -174,10 +172,13 @@ export default defineComponent({
   },
   setup(props, context) {
     const m = reactive({
+      account: undefined as AccountInfo | undefined,
+      permissionRead: false,
+      permissionWrite: false,
       entity: undefined as entity.EntityName | undefined,
       relations: {},
-      headers: undefined as entity.ExtendedDataTableHeader[] | undefined,
-      authority: undefined as entity.Authority | undefined,
+      headers: undefined as listinfo.ExtendedDataTableHeader[] | undefined,
+      authority: undefined as listinfo.Authority | undefined,
       items: [] as any[],
       page: 1,
       itemsLength: 0,
@@ -218,28 +219,29 @@ export default defineComponent({
     const updateEntity = (propsEntity: entity.EntityName) => {
       if (entity.isEntity(propsEntity)) {
         m.entity = propsEntity;
-        m.relations = entity.ListDescriptions[m.entity!].relations;
+        m.relations = listinfo.ListDescriptions[m.entity!].relations;
         m.page = 1;
         m.sortBy = "";
         m.sortDesc = true;
         m.prevSortBy = "";
         buildHeaders();
+        updatePermission();
       }
     };
 
     const buildHeaders = () => {
-      m.headers = entity.ListDescriptions[m.entity!].headers();
+      m.headers = listinfo.ListDescriptions[m.entity!].headers();
       //prettier-ignore
-      m.columnSelecter = m.headers.map((x: entity.ExtendedDataTableHeader) => x.value);
+      m.columnSelecter = m.headers.map((x: listinfo.ExtendedDataTableHeader) => x.value);
       m.headers.push({
         text: "Actions",
         value: "actions",
         sortable: false,
         width: 0
       });
-      m.authority = entity.ListDescriptions[m.entity!].authorities;
+      m.authority = listinfo.ListDescriptions[m.entity!].authorities;
       //prettier-ignore
-      m.headers.forEach((x: entity.ExtendedDataTableHeader) => {if(x.default) m.defaultItem[x.value] = x.default;})
+      m.headers.forEach((x: listinfo.ExtendedDataTableHeader) => {if(x.default) m.defaultItem[x.value] = x.default;})
       context.emit("setItem", m.defaultItem);
     };
 
@@ -249,14 +251,14 @@ export default defineComponent({
         relations: m.relations,
         orderby: m.sortBy,
         orderdesc: m.sortDesc ? "DESC" : "ASC",
-        searchColumn: m.searchColumn!,
-        searchType: m.searchType.value!,
+        searchColumn: m.searchColumn,
+        searchType: m.searchType ? m.searchType.value : "",
         searchText: m.searchText,
         skip: (m.page - 1) * 10,
         take: m.itemsPerPage !== -1 ? m.itemsPerPage : m.itemsLength
       };
       m.isLoad = true;
-      m.response = await helper.getList(opt);
+      m.response = (await helper.getList(opt)) as AxiosResponse;
       m.items = m.response!.data.body;
       m.itemsLength = m.response!.data.length;
       if (m.relations) {
@@ -316,31 +318,24 @@ export default defineComponent({
 
     const save = async () => {
       let data = props.editedItem;
-      // let data = {
-      //   id: 1,
-      //   firstName: "aa",
-      //   lastName: "ee",
-      //   age: 33,
-      //   roles: [
-      //     {
-      //       id: 999,
-      //       role: "Read2"
-      //     }
-      //   ]
-      // };
       const opt = { entityName: m.entity, data: data };
-      m.response = await helper.updateItem(opt);
+      m.response = (await helper.updateItem(opt)) as AxiosResponse;
       await updateList();
       close();
     };
 
+    const updatePermission = () => {
+      m.permissionRead = props.permissionRead;
+      m.permissionWrite = props.permissionWrite;
+    };
+
     watch(
       () => [m.searchColumn, m.searchText, m.searchType],
-      () => {
-        if (m.searchColumn || m.searchText || m.searchType) updateList();
-        else if (!m.searchColumn || !m.searchText || !m.searchType) {
+      async () => {
+        if (m.searchColumn && m.searchText && m.searchType) await updateList();
+        else if (!m.searchColumn && !m.searchText && !m.searchType) {
+          await updateList();
           m.page = 1;
-          updateList();
         }
       }
     );
@@ -367,8 +362,10 @@ export default defineComponent({
     );
 
     // init
-    updateEntity(props.entity!);
-    updateList();
+    onMounted(() => {
+      updateEntity(props.entity!);
+      updateList();
+    });
 
     return {
       props,

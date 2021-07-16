@@ -1,5 +1,5 @@
 import * as entity from "../entity";
-import { extensionAttributes } from "../views/SignUp.vue";
+import { extensionAttributes } from "./views/SignUp.vue";
 export type RequestBase = {
   entityName: entity.EntityName;
   relations?: {};
