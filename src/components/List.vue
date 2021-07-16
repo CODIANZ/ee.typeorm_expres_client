@@ -34,6 +34,7 @@
               single-line
               hide-details
               @blur="onBlur"
+              clearable
             />
             <v-select
               v-model="m.searchType"
@@ -126,27 +127,6 @@
       </template>
     </v-data-table>
     <hr />
-    <div v-if="m.response">
-      <span>
-        レスポンス全文：
-        {{ m.response }}
-      </span>
-      <hr />
-      <span>
-        リクエストクエリー：
-        {{ m.response.config.params }}
-      </span>
-      <hr />
-      <span>
-        レスポンスデータ：
-        {{ m.response.data }}
-      </span>
-      <hr />
-      <span>
-        debug：
-        {{ m.headers }}
-      </span>
-    </div>
   </v-container>
 </template>
 
@@ -156,7 +136,8 @@ import {
   defineComponent,
   reactive,
   watch,
-  computed
+  computed,
+  onMounted
 } from "@vue/composition-api";
 import { AxiosResponse } from "axios";
 import { FindRequestOptions, DeleteRequestOptions } from "../@types/request";
@@ -164,7 +145,6 @@ import * as helper from "../DBHelper";
 import * as entity from "../entity";
 import * as listinfo from "./ListInfo";
 import { AccountInfo } from "@azure/msal-browser";
-import { AzureADPermissions } from "@/@types/azureADPermissions";
 
 type Item = { id?: string };
 type SelecterItem = { text: string; value: string };
@@ -267,14 +247,14 @@ export default defineComponent({
         relations: m.relations,
         orderby: m.sortBy,
         orderdesc: m.sortDesc ? "DESC" : "ASC",
-        searchColumn: m.searchColumn!,
-        searchType: m.searchType.value!,
+        searchColumn: m.searchColumn,
+        searchType: m.searchType ? m.searchType.value : "",
         searchText: m.searchText,
         skip: (m.page - 1) * 10,
         take: m.itemsPerPage !== -1 ? m.itemsPerPage : m.itemsLength
       };
       m.isLoad = true;
-      m.response = await helper.getList(opt);
+      m.response = (await helper.getList(opt)) as AxiosResponse;
       m.items = m.response!.data.body;
       m.itemsLength = m.response!.data.length;
       if (m.relations) {
@@ -335,7 +315,7 @@ export default defineComponent({
     const save = async () => {
       let data = props.editedItem;
       const opt = { entityName: m.entity, data: data };
-      m.response = await helper.updateItem(opt);
+      m.response = (await helper.updateItem(opt)) as AxiosResponse;
       await updateList();
       close();
     };
@@ -347,11 +327,11 @@ export default defineComponent({
 
     watch(
       () => [m.searchColumn, m.searchText, m.searchType],
-      () => {
-        if (m.searchColumn || m.searchText || m.searchType) updateList();
-        else if (!m.searchColumn || !m.searchText || !m.searchType) {
+      async () => {
+        if (m.searchColumn && m.searchText && m.searchType) await updateList();
+        else if (!m.searchColumn && !m.searchText && !m.searchType) {
+          await updateList();
           m.page = 1;
-          updateList();
         }
       }
     );
@@ -378,8 +358,10 @@ export default defineComponent({
     );
 
     // init
-    updateEntity(props.entity!);
-    updateList();
+    onMounted(() => {
+      updateEntity(props.entity!);
+      updateList();
+    });
 
     return {
       props,

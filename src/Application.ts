@@ -26,7 +26,7 @@ export class Application {
         ],
         // redirectUri: `${location.protocol}//${location.host}/`,
         redirectUri: `http://localhost:8080/`,
-        mode: "popup",
+        mode: "redirect",
         cacheLocation: "sessionStorage"
       };
       this.m_auth = new AzureClientAuth(setting);
@@ -37,7 +37,7 @@ export class Application {
     return this.m_auth?.getAccount();
   }
 
-  public get getTokenHeader() {
+  public getTokenHeader() {
     return from(Application.Instance.Auth.getToken()).pipe(
       map((res) => {
         if (!res) throw Error("!res");

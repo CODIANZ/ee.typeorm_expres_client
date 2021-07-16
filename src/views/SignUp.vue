@@ -129,20 +129,20 @@
         <v-icon small class="mr-2" @click="editItem(item)"> mdi-pencil </v-icon>
       </template>
     </v-data-table>
-    <div v-if="m.response">
-      <span>
-        account:
-        {{ m.account }}
-      </span>
-      <hr />
-    </div>
   </v-container>
 </template>
 
 <script lang="ts">
 import vue from "vue";
 import { readWritePerm, signUpDataPerm } from "../@types/request";
-import { defineComponent, reactive, watch } from "@vue/composition-api";
+import {
+  defineComponent,
+  onBeforeUpdate,
+  onMounted,
+  onUpdated,
+  reactive,
+  watch
+} from "@vue/composition-api";
 import { signUp, getList, update } from "../SignUpHelper";
 import { AxiosResponse } from "axios";
 import { DataTableHeader } from "vuetify";
@@ -304,8 +304,10 @@ export default defineComponent({
         });
       }
     );
-    checkpermission();
-    updateList();
+    onMounted(() => {
+      checkpermission();
+      updateList();
+    });
     return {
       m,
       save,

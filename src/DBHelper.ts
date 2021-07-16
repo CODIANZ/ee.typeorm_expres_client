@@ -1,43 +1,46 @@
 import { FindRequestOptions, DeleteRequestOptions } from "./@types/request";
 import axios from "axios";
+import { mergeMap, take } from "rxjs/operators";
+import { BehaviorSubject, from, NEVER, Observable, of } from "rxjs";
+import { Application } from "./Application";
 
 const crud_url = "http://localhost:7081/api/DBCrud";
 
-export async function getList(opt: FindRequestOptions) {
-  let res;
-  await axios
-    .get(crud_url, { params: opt })
-    .then((response) => {
-      res = response;
+export const getList = (opt: FindRequestOptions) => {
+  // prettier-ignore
+  return Application.Instance.getTokenHeader()
+  .pipe(mergeMap((headers) => {
+    return from(axios({
+      url: crud_url,
+      method:"GET",
+      headers,
+      params:opt
     })
-    .catch((e) => {
-      res = e.response.data.message;
-    });
-  return res;
-}
+  )})).toPromise()
+};
 
 export async function deleteItem(opt: DeleteRequestOptions) {
-  let res;
-  await axios
-    .delete(crud_url, { params: opt })
-    .then((response) => {
-      res = response;
-    })
-    .catch((e) => {
-      res = e.response.data.message;
-    });
-  return res;
+  // prettier-ignore
+  return Application.Instance.getTokenHeader()
+    .pipe(mergeMap((headers) => {
+      return from(axios({
+        url: crud_url,
+        method:"DELETE",
+        headers,
+        params: opt
+      })
+    )})).toPromise()
 }
 
 export async function updateItem(opt: any) {
-  let res;
-  await axios
-    .post(crud_url, opt)
-    .then((response) => {
-      res = response;
+  // prettier-ignore
+  return Application.Instance.getTokenHeader()
+  .pipe(mergeMap((headers) => {
+    return from(axios({
+      url: crud_url,
+      method:"POST",
+      headers,
+      data:opt
     })
-    .catch((e) => {
-      res = e.response.data.message;
-    });
-  return res;
+  )})).toPromise()
 }
