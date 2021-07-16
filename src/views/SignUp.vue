@@ -11,6 +11,9 @@
     >
       <template v-slot:top>
         <v-toolbar flat>
+          <v-row>
+            <v-toolbar-title class="mx-4 mt-2">アカウント</v-toolbar-title>
+          </v-row>
           <v-spacer></v-spacer>
           <v-dialog v-model="m.dialog" fullscreen v-if="m.permissionWrite">
             <template v-slot:activator="{ on, attrs }">
@@ -19,108 +22,116 @@
               </v-btn>
             </template>
             <v-card>
-              <v-spacer class="mt-16"></v-spacer>
-              <ValidationObserver v-slot="{ invalid }">
-                <v-card-text>
-                  <v-row v-if="m.editedIndex == -1">
-                    <v-col cols="12" sm="6">
-                      <ValidationProvider
-                        v-slot="{ errors }"
-                        name="lastName"
-                        :rules="m.editedRules.lastName"
-                      >
-                        <v-text-field
-                          v-model="m.lastName"
-                          color="purple darken-2"
-                          label="姓"
-                          :error-messages="errors"
-                          required
-                        ></v-text-field>
-                      </ValidationProvider>
-                    </v-col>
-                    <v-col cols="12" sm="6">
-                      <ValidationProvider
-                        v-slot="{ errors }"
-                        name="firstName"
-                        :rules="m.editedRules.firstName"
-                      >
-                        <v-text-field
-                          v-model="m.firstName"
-                          color="blue darken-2"
-                          label="名"
-                          :error-messages="errors"
-                          required
-                        ></v-text-field>
-                      </ValidationProvider>
-                    </v-col>
-                    <v-col cols="12" sm="6">
-                      <ValidationProvider
-                        v-slot="{ errors }"
-                        name="email"
-                        :rules="m.editedRules.email"
-                      >
-                        <v-text-field
-                          v-model="m.mailAddress"
-                          color="blue darken-2"
-                          label="メールアドレス"
-                          :error-messages="errors"
-                          required
-                        ></v-text-field>
-                      </ValidationProvider>
-                    </v-col>
-                  </v-row>
-                  <v-row v-if="m.editedIndex != -1">
-                    <v-col cols="12" sm="6">
-                      表示名：{{ m.editedItem.displayName }}
-                    </v-col>
-                  </v-row>
-                  <v-container>
-                    <v-checkbox
-                      v-model="
-                        m.editedItem
-                          .extension_d682a04f5b2c4876914713579fdf1e26_ReadBook
-                      "
-                      label="readBook"
-                    ></v-checkbox>
-                    <v-checkbox
-                      v-model="
-                        m.editedItem
-                          .extension_d682a04f5b2c4876914713579fdf1e26_WriteBook
-                      "
-                      label="writeBook"
-                    ></v-checkbox>
-                    <v-checkbox
-                      v-model="
-                        m.editedItem
-                          .extension_d682a04f5b2c4876914713579fdf1e26_ReadAccount
-                      "
-                      label="readAccount"
-                    ></v-checkbox>
-                    <v-checkbox
-                      v-model="
-                        m.editedItem
-                          .extension_d682a04f5b2c4876914713579fdf1e26_WriteAccount
-                      "
-                      label="writeAccount"
-                    ></v-checkbox>
-                  </v-container>
-                </v-card-text>
-                <v-card-actions>
-                  <v-spacer></v-spacer>
-                  <v-btn color="blue darken-1" text @click="close">
-                    Cancel
-                  </v-btn>
-                  <v-btn
-                    color="blue darken-1"
-                    text
-                    @click="save"
-                    type="submit"
-                    :disabled="invalid"
-                  >
-                    Save
-                  </v-btn>
-                </v-card-actions>
-              </ValidationObserver>
+              <v-container>
+                <v-spacer class="mt-16"></v-spacer>
+                <ValidationObserver v-slot="{ invalid }">
+                  <v-card-text>
+                    <v-row v-if="m.editedIndex == -1">
+                      <v-col cols="12" sm="6">
+                        <ValidationProvider
+                          v-slot="{ errors }"
+                          name="lastName"
+                          :rules="m.editedRules.lastName"
+                        >
+                          <v-text-field
+                            v-model="m.lastName"
+                            color="purple darken-2"
+                            label="姓"
+                            :error-messages="errors"
+                            required
+                          ></v-text-field>
+                        </ValidationProvider>
+                      </v-col>
+                      <v-col cols="12" sm="6">
+                        <ValidationProvider
+                          v-slot="{ errors }"
+                          name="firstName"
+                          :rules="m.editedRules.firstName"
+                        >
+                          <v-text-field
+                            v-model="m.firstName"
+                            color="blue darken-2"
+                            label="名"
+                            :error-messages="errors"
+                            required
+                          ></v-text-field>
+                        </ValidationProvider>
+                      </v-col>
+                      <v-col cols="12" sm="12">
+                        <ValidationProvider
+                          v-slot="{ errors }"
+                          name="email"
+                          :rules="m.editedRules.email"
+                        >
+                          <v-text-field
+                            v-model="m.mailAddress"
+                            color="blue darken-2"
+                            label="メールアドレス"
+                            :error-messages="errors"
+                            required
+                          ></v-text-field>
+                        </ValidationProvider>
+                      </v-col>
+                    </v-row>
+                    <v-row v-if="m.editedIndex != -1">
+                      <v-col cols="12" sm="6">
+                        表示名：{{ m.editedItem.displayName }}
+                      </v-col>
+                    </v-row>
+                    <v-container class="mt-3 ml-8">
+                      <v-row>
+                        <v-col cols="12" sm="4" md="4">
+                          <v-checkbox
+                            v-model="
+                              m.editedItem
+                                .extension_d682a04f5b2c4876914713579fdf1e26_ReadBook
+                            "
+                            label="readBook"
+                          ></v-checkbox>
+                          <v-checkbox
+                            v-model="
+                              m.editedItem
+                                .extension_d682a04f5b2c4876914713579fdf1e26_WriteBook
+                            "
+                            label="writeBook"
+                          ></v-checkbox>
+                        </v-col>
+                      </v-row>
+                      <v-row>
+                        <v-col cols="12" sm="4" md="4">
+                          <v-checkbox
+                            v-model="
+                              m.editedItem
+                                .extension_d682a04f5b2c4876914713579fdf1e26_ReadAccount
+                            "
+                            label="readAccount"
+                          ></v-checkbox>
+                          <v-checkbox
+                            v-model="
+                              m.editedItem
+                                .extension_d682a04f5b2c4876914713579fdf1e26_WriteAccount
+                            "
+                            label="writeAccount"
+                          ></v-checkbox>
+                        </v-col>
+                      </v-row>
+                    </v-container>
+                  </v-card-text>
+                  <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn color="blue darken-1" text @click="close">
+                      Cancel
+                    </v-btn>
+                    <v-btn
+                      color="blue darken-1"
+                      type="submit"
+                      :disabled="invalid"
+                    >
+                      Save
+                    </v-btn>
+                  </v-card-actions>
+                </ValidationObserver>
+              </v-container>
             </v-card>
           </v-dialog>
         </v-toolbar>
@@ -254,7 +265,13 @@ export default defineComponent({
           [extensionAttributes.WriteAccount]:
             m.editedItem[extensionAttributes.WriteAccount]
         };
-
+        let pass = "Aa0";
+        // ランダム文字列の生成、開発環境以外で使用
+        // const chars =
+        //   "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        // for (var i = 0; i < 8; i++) {
+        //   pass += chars.charAt(Math.floor(Math.random() * chars.length));
+        // }
         const data: signUpDataPerm = {
           accountEnabled: true,
           displayName: `${m.lastName} ${m.firstName}`,
@@ -266,7 +283,7 @@ export default defineComponent({
           )}#EXT#@codianzeval.onmicrosoft.com`,
           passwordProfile: {
             forceChangePasswordNextSignIn: false,
-            password: "Testpass01"
+            password: pass === "Aa0" ? pass : "Testpass01"
           },
           ...readWrite
         };

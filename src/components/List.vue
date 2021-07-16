@@ -1,5 +1,5 @@
 <template>
-  <v-container fluid v-if="m.permissionRead">
+  <v-container fluid>
     <v-spacer class="mt-16"></v-spacer>
     <v-data-table
       :entity="m.entity"
@@ -18,9 +18,10 @@
       <template v-slot:top>
         <v-toolbar flat>
           <v-row>
-            <v-toolbar-title class="mx-4">{{ m.entity }}</v-toolbar-title>
+            <v-toolbar-title class="mx-4 mt-4">{{ m.entity }}</v-toolbar-title>
             <v-divider class="mx-4" inset vertical></v-divider>
             <v-select
+              class="ml-6 mt-4"
               v-model="m.searchColumn"
               :items="m.columnSelecter"
               label="Select"
@@ -29,6 +30,7 @@
               clearable
             />
             <v-text-field
+              class="mt-4"
               v-model="m.inTyped"
               label="Search"
               single-line
@@ -37,6 +39,7 @@
               clearable
             />
             <v-select
+              class="mt-4"
               v-model="m.searchType"
               :items="m.typeSelecter"
               label="Type"
@@ -60,33 +63,34 @@
               </v-btn>
             </template>
             <v-card>
-              <ValidationObserver v-slot="{ invalid }">
-                <v-card-title>
-                  <span class="text-h5">{{ formTitle }}</span>
-                </v-card-title>
-                <v-card-text>
-                  <v-container>
+              <v-container>
+                <v-spacer class="mt-10"></v-spacer>
+                <ValidationObserver v-slot="{ invalid }">
+                  <v-card-title>
+                    <span class="text-h5">{{ formTitle }}</span>
+                  </v-card-title>
+                  <v-card-text>
                     <v-row>
                       <slot name="editor" />
                     </v-row>
-                  </v-container>
-                </v-card-text>
-                <v-card-actions>
-                  <v-spacer></v-spacer>
-                  <v-btn color="blue darken-1" text @click="close">
-                    Cancel
-                  </v-btn>
-                  <v-btn
-                    color="blue darken-1"
-                    text
-                    @click="save"
-                    type="submit"
-                    :disabled="invalid"
-                  >
-                    Save
-                  </v-btn>
-                </v-card-actions>
-              </ValidationObserver>
+                  </v-card-text>
+                  <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn color="blue darken-1" text @click="close">
+                      Cancel
+                    </v-btn>
+                    <v-btn
+                      color="blue darken-1"
+                      text
+                      @click="save"
+                      type="submit"
+                      :disabled="invalid"
+                    >
+                      Save
+                    </v-btn>
+                  </v-card-actions>
+                </ValidationObserver>
+              </v-container>
             </v-card>
           </v-dialog>
           <v-dialog v-model="m.dialogDelete" max-width="500px">

@@ -17,6 +17,12 @@
           </v-list-item-icon>
           <v-list-item-title>{{ item.title }}</v-list-item-title>
         </v-list-item>
+        <v-list-item @click="onClickLogout()">
+          <v-list-item-icon>
+            <v-icon>{{ m.logout.icon }}</v-icon>
+          </v-list-item-icon>
+          <v-list-item-title>{{ m.logout.title }}</v-list-item-title>
+        </v-list-item>
       </v-list>
     </v-navigation-drawer>
   </div>
@@ -26,6 +32,7 @@
 import vue from "vue";
 import {
   defineComponent,
+  onMounted,
   onUnmounted,
   reactive,
   watch
@@ -55,6 +62,7 @@ export default defineComponent({
   setup(props, context) {
     const m = reactive({
       items: [] as Item[],
+      logout: {} as Item,
       drawer: false,
       title: "ユーザー",
       dateTime: "",
@@ -77,6 +85,11 @@ export default defineComponent({
         path: "/role"
       }
     ];
+    m.logout = {
+      icon: "mdi-logout",
+      title: "ログアウト",
+      path: "/signout"
+    };
 
     const updateItems = () => {
       if (props.permissions!.ReadBook) {
@@ -93,11 +106,6 @@ export default defineComponent({
           path: "/signup"
         });
       }
-      m.items.push({
-        icon: "mdi-logout",
-        title: "ログアウト",
-        path: "/signout"
-      });
     };
 
     watch(
@@ -109,18 +117,21 @@ export default defineComponent({
       }
     );
 
+    onMounted(() => {
+      updateItems();
+    });
+
     return {
       m,
       onItemClick(item: Item) {
-        if (item.path == "/signout") {
-          Application.Instance.Auth.signOut();
-          context.emit("signOut");
-        } else {
-          m.title = item.title;
-          m.path = item.path;
-          m.drawer = false;
-          if (router.currentRoute.path != item.path) router.replace(item.path);
-        }
+        m.title = item.title;
+        m.path = item.path;
+        m.drawer = false;
+        if (router.currentRoute.path != item.path) router.replace(item.path);
+      },
+      onClickLogout() {
+        Application.Instance.Auth.signOut();
+        context.emit("signOut");
       }
     };
   }
